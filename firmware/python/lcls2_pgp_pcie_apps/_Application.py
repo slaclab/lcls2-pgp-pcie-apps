@@ -13,6 +13,20 @@ import pyrogue as pr
 
 import surf.protocols.batcher as batcher
 
+class VcDataTap(pr.Device):
+    def __init__(   self,
+            name        = "VcDataTap",
+            description = "Selects the VC used for the AxiStreamBatcherEventBuilder",
+            **kwargs):
+        super().__init__(name=name, description=description, **kwargs)
+
+        self.add(pr.RemoteVariable(
+            name         = 'Tap',
+            offset       = 0x100,
+            bitSize      = 2,
+            mode         = 'RW',
+        ))
+
 class AppLane(pr.Device):
     def __init__(   self,
             name        = "AppLane",
@@ -27,9 +41,15 @@ class AppLane(pr.Device):
         #######################################
         self.add(batcher.AxiStreamBatcherEventBuilder(
             name         = 'EventBuilder',
-            offset       = 0x00000,
+            offset       = 0x0_0000,
             numberSlaves = 2,
             tickUnit     = '156.25MHz',
+            expand       = True,
+        ))
+
+        self.add(VcDataTap(
+            name         = 'VcDataTap',
+            offset       = 0x1_0000,
             expand       = True,
         ))
 
