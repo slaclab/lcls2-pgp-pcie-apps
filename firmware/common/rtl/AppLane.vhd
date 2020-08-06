@@ -21,6 +21,7 @@ use surf.StdRtlPkg.all;
 use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
+use surf.Pgp3Pkg.all;
 
 entity AppLane is
    generic (
@@ -214,21 +215,32 @@ begin
          writeRegister(0)(31 downto 2) => dummy);
 
    process(appObSlaves, pgpObMasters, tap, tapSlave, txMaster)
+      variable appObMastersTmp : AxiStreamMasterArray(3 downto 0);
+      variable pgpObSlavesTmp  : AxiStreamSlaveArray(3 downto 0);
+      variable tapMasterTmp    : AxiStreamMasterType;
+      variable txSlaveTmp      : AxiStreamSlaveType;
+      variable vc              : natural;
    begin
-      for i in 0 to 3 loop
-         if i = tap then
-            -- Event Builder
-            tapMaster       <= pgpObMasters(i);
-            pgpObSlaves(i)  <= tapSlave;
-            -- DMA Path after Event builder's FIFO
-            appObMasters(i) <= txMaster;
-            txSlave         <= appObSlaves(i);
-         else
-            -- DMA Path
-            appObMasters(i) <= pgpObMasters(i);
-            pgpObSlaves(i)  <= appObSlaves(i);
-         end if;
-      end loop;
+      -- Init
+      appObMastersTmp := pgpObMasters;
+      pgpObSlavesTmp  := appObSlaves;
+
+      -- Calculate the VC tap
+      vc := conv_integer(tap);
+
+      -- Event Builder
+      tapMasterTmp       := pgpObMasters(vc);
+      pgpObSlavesTmp(vc) := tapSlave;
+
+      -- DMA Path after Event builder's FIFO
+      appObMastersTmp(vc) := txMaster;
+      txSlaveTmp          := appObSlaves(vc);
+
+      -- Outputs
+      tapMaster    <= tapMasterTmp;
+      txSlave      <= txSlaveTmp;
+      pgpObSlaves  <= pgpObSlavesTmp;
+      appObMasters <= appObMastersTmp;
    end process;
 
    -----------------
