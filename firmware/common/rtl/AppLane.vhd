@@ -61,6 +61,9 @@ architecture mapping of AppLane is
    signal axilReadMasters  : AxiLiteReadMasterArray(1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(1 downto 0);
 
+   signal tap   : slv(1 downto 0);
+   signal dummy : slv(31 downto 2);
+
    signal tapMaster : AxiStreamMasterType;
    signal tapSlave  : AxiStreamSlaveType;
 
@@ -70,17 +73,11 @@ architecture mapping of AppLane is
    signal txMaster : AxiStreamMasterType;
    signal txSlave  : AxiStreamSlaveType;
 
+   signal appObMasters : AxiStreamQuadMasterType;
+   signal appObSlaves  : AxiStreamQuadSlaveType;
+
    signal appObMaster : AxiStreamMasterType;
    signal appObSlave  : AxiStreamSlaveType;
-
-   signal tap   : slv(1 downto 0);
-   signal dummy : slv(31 downto 2);
-
-   signal rxMasters : AxiStreamQuadMasterType;
-   signal rxSlaves  : AxiStreamQuadSlaveType;
-
-   signal txMasters : AxiStreamQuadMasterType;
-   signal txSlaves  : AxiStreamQuadSlaveType;
 
 begin
 
@@ -165,44 +162,6 @@ begin
          mAxisMaster     => eventMaster,
          mAxisSlave      => eventSlave);
 
-   --------------------
-   -- Data Path Routing
-   --------------------
-   U_AxiLiteRegs : entity surf.AxiLiteRegs
-      generic map (
-         TPD_G           => TPD_G,
-         NUM_WRITE_REG_G => 1,
-         INI_WRITE_REG_G => (0 => x"0000_0001"))  -- default to VC1 as data path VC
-      port map (
-         -- AXI-Lite Bus
-         axiClk                        => axilClk,
-         axiClkRst                     => axilRst,
-         axiReadMaster                 => axilReadMasters(1),
-         axiReadSlave                  => axilReadSlaves(1),
-         axiWriteMaster                => axilWriteMasters(1),
-         axiWriteSlave                 => axilWriteSlaves(1),
-         -- User Read/Write registers
-         writeRegister(0)(1 downto 0)  => tap,
-         writeRegister(0)(31 downto 2) => dummy);
-
-   process(pgpObMasters, tap, tapSlave, txMaster, txSlaves)
-   begin
-      for i in 0 to 3 loop
-         if i = tap then
-            -- Event Builder
-            tapMaster      <= pgpObMasters(i);
-            pgpObSlaves(i) <= tapSlave;
-            -- DMA Path after Event builder's FIFO
-            txMasters(i)   <= txMaster;
-            txSlave        <= txSlaves(i);
-         else
-            -- DMA Path
-            txMasters(i)   <= pgpObMasters(i);
-            pgpObSlaves(i) <= txSlaves(i);
-         end if;
-      end loop;
-   end process;
-
    -------------------------------------
    -- Burst FIFO before interleaving MUX
    -------------------------------------
@@ -234,6 +193,44 @@ begin
          mAxisMaster => txMaster,
          mAxisSlave  => txSlave);
 
+   --------------------
+   -- Data Path Routing
+   --------------------
+   U_AxiLiteRegs : entity surf.AxiLiteRegs
+      generic map (
+         TPD_G           => TPD_G,
+         NUM_WRITE_REG_G => 1,
+         INI_WRITE_REG_G => (0 => x"0000_0001"))  -- default to VC1 as data path VC
+      port map (
+         -- AXI-Lite Bus
+         axiClk                        => axilClk,
+         axiClkRst                     => axilRst,
+         axiReadMaster                 => axilReadMasters(1),
+         axiReadSlave                  => axilReadSlaves(1),
+         axiWriteMaster                => axilWriteMasters(1),
+         axiWriteSlave                 => axilWriteSlaves(1),
+         -- User Read/Write registers
+         writeRegister(0)(1 downto 0)  => tap,
+         writeRegister(0)(31 downto 2) => dummy);
+
+   process(appObSlaves, pgpObMasters, tap, tapSlave, txMaster)
+   begin
+      for i in 0 to 3 loop
+         if i = tap then
+            -- Event Builder
+            tapMaster       <= pgpObMasters(i);
+            pgpObSlaves(i)  <= tapSlave;
+            -- DMA Path after Event builder's FIFO
+            appObMasters(i) <= txMaster;
+            txSlave         <= appObSlaves(i);
+         else
+            -- DMA Path
+            appObMasters(i) <= pgpObMasters(i);
+            pgpObSlaves(i)  <= appObSlaves(i);
+         end if;
+      end loop;
+   end process;
+
    -----------------
    -- AXI Stream MUX
    -----------------
@@ -247,21 +244,14 @@ begin
          PIPE_STAGES_G        => 1)
       port map (
          -- Clock and reset
-         axisClk         => axilClk,
-         axisRst         => axilRst,
-         -- Inbound Master Ports
-         sAxisMasters(0) => pgpObMasters(0),
-         sAxisMasters(1) => txMaster,
-         sAxisMasters(2) => pgpObMasters(2),
-         sAxisMasters(3) => pgpObMasters(3),
-         -- Inbound Slave Ports
-         sAxisSlaves(0)  => pgpObSlaves(0),
-         sAxisSlaves(1)  => txSlave,
-         sAxisSlaves(2)  => pgpObSlaves(2),
-         sAxisSlaves(3)  => pgpObSlaves(3),
+         axisClk      => axilClk,
+         axisRst      => axilRst,
+         -- Inbound Ports
+         sAxisMasters => appObMasters,
+         sAxisSlaves  => appObSlaves,
          -- Outbound Port
-         mAxisMaster     => appObMaster,
-         mAxisSlave      => appObSlave);
+         mAxisMaster  => appObMaster,
+         mAxisSlave   => appObSlave);
 
    -----------------------
    -- App to DMA ASYNC FIFO
