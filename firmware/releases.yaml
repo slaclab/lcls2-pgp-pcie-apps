@@ -16,7 +16,7 @@ RogueConfig:
   - ../software/config
 
 RogueScripts:
-  - ../software/scripts/devGui
+#  - ../software/scripts/devGui
 
 Targets:
 ################################################################################  
