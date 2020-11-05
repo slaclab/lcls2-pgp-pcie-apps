@@ -50,15 +50,17 @@ class DevRoot(shared.Root):
         # Check for simulation
         if dev == 'sim':
             kwargs['timeout'] = 100000000 # 100 s
+            self.sim          = True
         else:
             kwargs['timeout'] = 5000000 # 5 s
+            self.sim          = False
 
         # Pass custom value to parent via super function
         super().__init__(
             dev         = dev,
             pgp3        = pgp3,
-            pollEn      = pollEn,
-            initRead    = initRead,
+            pollEn      = False if self.sim else pollEn,
+            initRead    = False if self.sim else initRead,
             numLanes    = numLanes,
             **kwargs)
 
@@ -137,11 +139,8 @@ class DevRoot(shared.Root):
             # Hide by default
             enableList.hidden = True
 
-        # Check if simulation
-        if (self.dev=='sim'):
-            pass
-
-        else:
+        # Check if not simulation
+        if self.sim is False:
 
             # Check for PCIe FW version
             fwVersion = self.DevPcie.AxiPcieCore.AxiVersion.FpgaVersion.get()
@@ -196,5 +195,8 @@ class DevRoot(shared.Root):
     # Function calls after loading YAML configuration
     def initialize(self):
         super().initialize()
-        self.StopRun()
-        self.CountReset()
+
+        # Check if not simulation
+        if self.sim is False:
+            self.StopRun()
+            self.CountReset()

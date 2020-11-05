@@ -48,8 +48,8 @@ if __name__ == "__main__":
         "--hwType",
         type     = str,
         required = False,
-        default  = 'kcu1500', # Default: kcu1500 PCIe card platform
-        help     = "kcu1500 or SlacPgpCardG4",
+        default  = 'SlacPgpCardG4', # Default: SlacPgpCardG4 PCIe card platform
+        help     = "SlacPgpCardG4 or kcu1500",
     )
 
     parser.add_argument(

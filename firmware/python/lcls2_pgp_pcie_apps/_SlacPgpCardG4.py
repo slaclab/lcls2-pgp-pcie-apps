@@ -12,7 +12,7 @@ import pyrogue as pr
 
 import axipcie                                 as pcie
 import lcls2_pgp_pcie_apps                     as dev
-import lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 as SlacPgpCardG4
+import lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 as pgpCard
 
 class SlacPgpCardG4(pr.Device):
     def __init__(self,
@@ -38,7 +38,7 @@ class SlacPgpCardG4(pr.Device):
         ))
 
         # Hardware Layer
-        self.add(SlacPgpCardG4.SlacPgpCardG4Hsio(
+        self.add(pgpCard.SlacPgpCardG4Hsio(
             name     = 'Hsio',
             offset    = 0x0080_0000,
             numLanes  = numLanes,
