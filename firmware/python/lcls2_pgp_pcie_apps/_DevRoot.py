@@ -39,7 +39,7 @@ class DevRoot(shared.Root):
                  **kwargs):
 
         # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x01000000
+        self.FwVersionLock = 0x01010000
 
         # Set local variables
         self.dev            = dev
@@ -67,6 +67,7 @@ class DevRoot(shared.Root):
 
         # Create memory interface
         self.memMap = axipcie.createAxiPcieMemMap(dev, 'localhost', 8000)
+        self.memMap.setName('PCIe_Bar0')
 
         # Instantiate the top level Device and pass it the memory map
         self.add(devTarget(
