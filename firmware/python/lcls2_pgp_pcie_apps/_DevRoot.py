@@ -28,6 +28,8 @@ class DevRoot(shared.Root):
                  dev            = '/dev/datadev_0',# path to PCIe device
                  enLclsI        = True,
                  enLclsII       = False,
+                 yamlFileLclsI  = "config/defaults_LCLS-I.yml",
+                 yamlFileLclsII = "config/defaults_LCLS-II.yml",
                  startupMode    = False, # False = LCLS-I timing mode, True = LCLS-II timing mode
                  standAloneMode = False, # False = using fiber timing, True = locally generated timing
                  pgp3           = False, # true = PGPv3, false = PGP2b
@@ -39,13 +41,15 @@ class DevRoot(shared.Root):
                  **kwargs):
 
         # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x01010000
+        self.FwVersionLock = 0x01030000
 
         # Set local variables
         self.dev            = dev
         self.startupMode    = startupMode
         self.standAloneMode = standAloneMode
         self.dataVc         = dataVc
+        self.yamlFileLclsI  = yamlFileLclsI
+        self.yamlFileLclsII = yamlFileLclsII
 
         # Check for simulation
         if dev == 'sim':
@@ -159,7 +163,7 @@ class DevRoot(shared.Root):
             if self.startupMode:
 
                 # Set the default to  LCLS-II mode
-                defaultFile = ["config/defaults_LCLS-II.yml"]
+                defaultFile = [self.yamlFileLclsII]
 
                 # Startup in LCLS-II mode
                 if self.standAloneMode:
@@ -171,7 +175,7 @@ class DevRoot(shared.Root):
             else:
 
                 # Set the default to  LCLS-I mode
-                defaultFile = ["config/defaults_LCLS-I.yml"]
+                defaultFile = [self.yamlFileLclsI]
 
                 # Startup in LCLS-I mode
                 if self.standAloneMode:
@@ -184,8 +188,10 @@ class DevRoot(shared.Root):
             self.ReadAll()
 
             # Load the YAML configurations
-            print(f'Loading {defaultFile} Configuration File...')
-            self.LoadConfig(defaultFile)
+            for yamlFile in defaultFile:
+                if yamlFile is not None:
+                    print(f'Loading {yamlFile} Configuration File...')
+                    self.LoadConfig(yamlFile)
 
             # Set the VC data tap
             vcDataTap = self.find(typ=dev.VcDataTap)

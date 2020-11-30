@@ -39,16 +39,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--pgp3",
         type     = argBool,
-        required = False,
-        default  = False,
+        required = True,
         help     = "true = PGPv3, false = PGP2b",
     )
 
     parser.add_argument(
         "--hwType",
         type     = str,
-        required = False,
-        default  = 'SlacPgpCardG4', # Default: SlacPgpCardG4 PCIe card platform
+        required = True,
         help     = "SlacPgpCardG4 or kcu1500",
     )
 
@@ -66,6 +64,22 @@ if __name__ == "__main__":
         required = False,
         default  = False, # Default: Disable LCLS-II hardware registers
         help     = "Enable LCLS-II hardware registers",
+    )
+
+    parser.add_argument(
+        "--yamlFileLclsI",
+        type     = str,
+        required = False,
+        default  = None, # Default: None = bypassing YAML load
+        help     = "Sets the default LCLS-I YAML configuration file to be loaded at the root.start()",
+    )
+
+    parser.add_argument(
+        "--yamlFileLclsII",
+        type     = str,
+        required = False,
+        default  = None, # Default: None = bypassing YAML load
+        help     = "Sets the default LCLS-II YAML configuration file to be loaded at the root.start()",
     )
 
     parser.add_argument(
@@ -177,6 +191,8 @@ if __name__ == "__main__":
             dataVc         = args.dataVc,
             enLclsI        = (args.enLclsII or not args.startupMode),
             enLclsII       = (args.enLclsII or args.startupMode),
+            yamlFileLclsI  = args.yamlFileLclsI,
+            yamlFileLclsII = args.yamlFileLclsII,
             startupMode    = args.startupMode,
             standAloneMode = args.standAloneMode,
             numLanes       = numLanes,
