@@ -3,11 +3,11 @@
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'Camera link gateway', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'Camera link gateway', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -30,27 +30,29 @@ entity AppLane is
       DMA_AXIS_CONFIG_G : AxiStreamConfigType);
    port (
       -- AXI-Lite Interface
-      axilClk         : in  sl;
-      axilRst         : in  sl;
-      axilReadMaster  : in  AxiLiteReadMasterType;
-      axilReadSlave   : out AxiLiteReadSlaveType;
-      axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      axilClk              : in  sl;
+      axilRst              : in  sl;
+      axilReadMaster       : in  AxiLiteReadMasterType;
+      axilReadSlave        : out AxiLiteReadSlaveType;
+      axilWriteMaster      : in  AxiLiteWriteMasterType;
+      axilWriteSlave       : out AxiLiteWriteSlaveType;
       -- PGP Streams (axilClk domain)
-      pgpIbMaster     : out AxiStreamMasterType;
-      pgpIbSlave      : in  AxiStreamSlaveType;
-      pgpObMasters    : in  AxiStreamQuadMasterType;
-      pgpObSlaves     : out AxiStreamQuadSlaveType;
+      pgpIbMaster          : out AxiStreamMasterType;
+      pgpIbSlave           : in  AxiStreamSlaveType;
+      pgpObMasters         : in  AxiStreamQuadMasterType;
+      pgpObSlaves          : out AxiStreamQuadSlaveType;
       -- Trigger Event streams (axilClk domain)
-      eventAxisMaster : in  AxiStreamMasterType;
-      eventAxisSlave  : out AxiStreamSlaveType;
+      eventTrigMsgMaster   : in  AxiStreamMasterType;
+      eventTrigMsgSlave    : out AxiStreamSlaveType;
+      eventTimingMsgMaster : in  AxiStreamMasterType;
+      eventTimingMsgSlave  : out AxiStreamSlaveType;
       -- DMA Interface (dmaClk domain)
-      dmaClk          : in  sl;
-      dmaRst          : in  sl;
-      dmaIbMaster     : out AxiStreamMasterType;
-      dmaIbSlave      : in  AxiStreamSlaveType;
-      dmaObMaster     : in  AxiStreamMasterType;
-      dmaObSlave      : out AxiStreamSlaveType);
+      dmaClk               : in  sl;
+      dmaRst               : in  sl;
+      dmaIbMaster          : out AxiStreamMasterType;
+      dmaIbSlave           : in  AxiStreamSlaveType;
+      dmaObMaster          : in  AxiStreamMasterType;
+      dmaObSlave           : out AxiStreamSlaveType);
 end AppLane;
 
 architecture mapping of AppLane is
@@ -135,15 +137,16 @@ begin
 
    ----------------------------------
    -- Event Builder
-   ----------------------------------         
+   ----------------------------------
    U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G          => TPD_G,
-         NUM_SLAVES_G   => 2,
+         NUM_SLAVES_G   => 3,
          MODE_G         => "ROUTED",
          TDEST_ROUTES_G => (
             0           => "0000000-",   -- Trig on 0x0, Event on 0x1
-            1           => "00000010"),  -- Map PGP[tap] to TDEST 0x2      
+            1           => "00000010",   -- Map PGP[VC1] to TDEST 0x2
+            2           => "00000011"),  -- Map Timing   to TDEST 0x3
          TRANS_TDEST_G  => X"01",
          AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
       port map (
@@ -156,10 +159,12 @@ begin
          axilWriteMaster => axilWriteMasters(0),
          axilWriteSlave  => axilWriteSlaves(0),
          -- AXIS Interfaces
-         sAxisMasters(0) => eventAxisMaster,
+         sAxisMasters(0) => eventTrigMsgMaster,
          sAxisMasters(1) => tapMaster,   -- PGP[tap]
-         sAxisSlaves(0)  => eventAxisSlave,
+         sAxisMasters(2) => eventTimingMsgMaster,
+         sAxisSlaves(0)  => eventTrigMsgSlave,
          sAxisSlaves(1)  => tapSlave,    -- PGP[tap]
+         sAxisSlaves(2)  => eventTimingMsgSlave,
          mAxisMaster     => eventMaster,
          mAxisSlave      => eventSlave);
 
