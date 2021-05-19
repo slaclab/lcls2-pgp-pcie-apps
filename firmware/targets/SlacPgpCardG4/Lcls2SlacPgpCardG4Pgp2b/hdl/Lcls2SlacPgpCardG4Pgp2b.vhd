@@ -84,7 +84,7 @@ architecture top_level of Lcls2SlacPgpCardG4Pgp2b is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 64-bit interface
    constant AXIL_CLK_FREQ_C   : real                := 156.25E+6;  -- units of Hz
-   constant DMA_SIZE_C        : positive            := 8;
+   constant DMA_SIZE_C        : positive            := 4;
 
    constant NUM_AXIL_MASTERS_C : positive := 2;
 

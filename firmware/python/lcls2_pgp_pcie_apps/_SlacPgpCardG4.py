@@ -16,8 +16,8 @@ import lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 as pgpCard
 
 class SlacPgpCardG4(pr.Device):
     def __init__(self,
-                 numLanes = 8,
-                 pgp3     = False,
+                 numLanes = 4,
+                 pgp4     = False,
                  enLclsI  = True,
                  enLclsII = False,
                  **kwargs):
@@ -42,7 +42,7 @@ class SlacPgpCardG4(pr.Device):
             name     = 'Hsio',
             offset    = 0x0080_0000,
             numLanes  = numLanes,
-            pgp3      = pgp3,
+            pgp4      = pgp4,
             enLclsI   = enLclsI,
             enLclsII  = enLclsII,
             expand    = True,

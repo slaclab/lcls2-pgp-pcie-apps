@@ -32,7 +32,7 @@ class DevRoot(shared.Root):
                  yamlFileLclsII = "config/defaults_LCLS-II.yml",
                  startupMode    = False, # False = LCLS-I timing mode, True = LCLS-II timing mode
                  standAloneMode = False, # False = using fiber timing, True = locally generated timing
-                 pgp3           = False, # true = PGPv3, false = PGP2b
+                 pgp4           = False, # true = PGPv4, false = PGP2b
                  dataVc         = 1,
                  pollEn         = True,  # Enable automatic polling registers
                  initRead       = True,  # Read all registers at start of the system
@@ -62,7 +62,7 @@ class DevRoot(shared.Root):
         # Pass custom value to parent via super function
         super().__init__(
             dev         = dev,
-            pgp3        = pgp3,
+            pgp4        = pgp4,
             pollEn      = False if self.sim else pollEn,
             initRead    = False if self.sim else initRead,
             numLanes    = numLanes,
@@ -80,7 +80,7 @@ class DevRoot(shared.Root):
             name     = 'DevPcie',
             memBase  = self.memMap,
             numLanes = numLanes,
-            pgp3     = pgp3,
+            pgp4     = pgp4,
             enLclsI  = enLclsI,
             enLclsII = enLclsII,
             expand   = True,

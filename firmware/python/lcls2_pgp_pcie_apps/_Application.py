@@ -35,14 +35,15 @@ class AppLane(pr.Device):
         super().__init__(name=name, description=description, **kwargs)
 
         #######################################
-        # SLAVE[TDEST=0] = XPM Trigger
-        # SLAVE[TDEST=1] = XPM Event Transition
-        # SLAVE[TDEST=2] = Camera Image
+        # SLAVE[INDEX=0][TDEST=0] = XPM Trigger
+        # SLAVE[INDEX=0][TDEST=1] = XPM Event Transition
+        # SLAVE[INDEX=1][TDEST=2] = Camera Image
+        # SLAVE[INDEX=2][TDEST=3] = XPM Timing
         #######################################
         self.add(batcher.AxiStreamBatcherEventBuilder(
             name         = 'EventBuilder',
             offset       = 0x0_0000,
-            numberSlaves = 2,
+            numberSlaves = 3, # Total number of slave indexes (not necessarily same as TDEST)
             tickUnit     = '156.25MHz',
             expand       = True,
         ))

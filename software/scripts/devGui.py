@@ -37,10 +37,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--pgp3",
+        "--pgp4",
         type     = argBool,
         required = True,
-        help     = "true = PGPv3, false = PGP2b",
+        help     = "true = PGPv4, false = PGP2b",
     )
 
     parser.add_argument(
@@ -176,10 +176,8 @@ if __name__ == "__main__":
     # Select the hardware type
     if args.hwType == 'kcu1500':
         devTarget = lcls2_pgp_pcie_apps.Kcu1500
-        numLanes  = 4
     else:
         devTarget = lcls2_pgp_pcie_apps.SlacPgpCardG4
-        numLanes  = 8
 
     #################################################################
 
@@ -187,7 +185,7 @@ if __name__ == "__main__":
             dev            = args.dev,
             pollEn         = args.pollEn,
             initRead       = args.initRead,
-            pgp3           = args.pgp3,
+            pgp4           = args.pgp4,
             dataVc         = args.dataVc,
             enLclsI        = (args.enLclsII or not args.startupMode),
             enLclsII       = (args.enLclsII or args.startupMode),
@@ -195,7 +193,6 @@ if __name__ == "__main__":
             yamlFileLclsII = args.yamlFileLclsII,
             startupMode    = args.startupMode,
             standAloneMode = args.standAloneMode,
-            numLanes       = numLanes,
             devTarget      = devTarget,
         ) as root:
 

@@ -17,7 +17,7 @@ import lcls2_pgp_fw_lib.hardware.XilinxKcu1500 as xilinxKcu1500
 class Kcu1500(pr.Device):
     def __init__(self,
                  numLanes = 4,
-                 pgp3     = False,
+                 pgp4     = False,
                  enLclsI  = True,
                  enLclsII = False,
                  **kwargs):
@@ -42,7 +42,7 @@ class Kcu1500(pr.Device):
             name     = 'Hsio',
             offset    = 0x0080_0000,
             numLanes  = numLanes,
-            pgp3      = pgp3,
+            pgp4      = pgp4,
             enLclsI   = enLclsI,
             enLclsII  = enLclsII,
             expand    = True,

@@ -24,12 +24,12 @@ Targets:
     ImageDir: targets/SlacPgpCardG4/Lcls2SlacPgpCardG4Pgp2b/images
     Extensions:
       - mcs
-  Lcls2SlacPgpCardG4Pgp3_6Gbps:
-    ImageDir: targets/SlacPgpCardG4/Lcls2SlacPgpCardG4Pgp3_6Gbps/images
+  Lcls2SlacPgpCardG4Pgp4_6Gbps:
+    ImageDir: targets/SlacPgpCardG4/Lcls2SlacPgpCardG4Pgp4_6Gbps/images
     Extensions:
       - mcs
-  Lcls2SlacPgpCardG4Pgp3_10Gbps:
-    ImageDir: targets/SlacPgpCardG4/Lcls2SlacPgpCardG4Pgp3_10Gbps/images
+  Lcls2SlacPgpCardG4Pgp4_10Gbps:
+    ImageDir: targets/SlacPgpCardG4/Lcls2SlacPgpCardG4Pgp4_10Gbps/images
     Extensions:
       - mcs
 ################################################################################        
@@ -37,12 +37,12 @@ Targets:
     ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp2b/images
     Extensions:
       - mcs
-  Lcls2XilinxKcu1500Pgp3_6Gbps:
-    ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp3_6Gbps/images
+  Lcls2XilinxKcu1500Pgp4_6Gbps:
+    ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp4_6Gbps/images
     Extensions:
       - mcs
-  Lcls2XilinxKcu1500Pgp3_10Gbps:
-    ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp3_10Gbps/images
+  Lcls2XilinxKcu1500Pgp4_10Gbps:
+    ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp4_10Gbps/images
     Extensions:
       - mcs
 ################################################################################        
@@ -52,12 +52,12 @@ Releases:
     Targets:
       #######################################
       - Lcls2SlacPgpCardG4Pgp2b
-      - Lcls2SlacPgpCardG4Pgp3_6Gbps
-      - Lcls2SlacPgpCardG4Pgp3_10Gbps
+      - Lcls2SlacPgpCardG4Pgp4_6Gbps
+      - Lcls2SlacPgpCardG4Pgp4_10Gbps
       #######################################
       - Lcls2XilinxKcu1500Pgp2b
-      - Lcls2XilinxKcu1500Pgp3_6Gbps
-      - Lcls2XilinxKcu1500Pgp3_10Gbps
+      - Lcls2XilinxKcu1500Pgp4_6Gbps
+      - Lcls2XilinxKcu1500Pgp4_10Gbps
       #######################################
     Types:
       - Rogue
