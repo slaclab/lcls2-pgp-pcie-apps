@@ -44,13 +44,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--hwType",
-        type     = str,
-        required = True,
-        help     = "SlacPgpCardG4 or kcu1500",
-    )
-
-    parser.add_argument(
         "--enLclsI",
         type     = argBool,
         required = False,
@@ -173,14 +166,6 @@ if __name__ == "__main__":
 
     #################################################################
 
-    # Select the hardware type
-    if args.hwType == 'kcu1500':
-        devTarget = lcls2_pgp_pcie_apps.Kcu1500
-    else:
-        devTarget = lcls2_pgp_pcie_apps.SlacPgpCardG4
-
-    #################################################################
-
     with lcls2_pgp_pcie_apps.DevRoot(
             dev            = args.dev,
             pollEn         = args.pollEn,
@@ -193,7 +178,6 @@ if __name__ == "__main__":
             yamlFileLclsII = args.yamlFileLclsII,
             startupMode    = args.startupMode,
             standAloneMode = args.standAloneMode,
-            devTarget      = devTarget,
         ) as root:
 
         ######################

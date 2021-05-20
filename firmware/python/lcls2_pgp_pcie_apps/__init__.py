@@ -12,6 +12,5 @@ import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from lcls2_pgp_pcie_apps._Application   import *
-from lcls2_pgp_pcie_apps._Kcu1500       import *
-from lcls2_pgp_pcie_apps._SlacPgpCardG4 import *
+from lcls2_pgp_pcie_apps._PcieFpga      import *
 from lcls2_pgp_pcie_apps._DevRoot       import *

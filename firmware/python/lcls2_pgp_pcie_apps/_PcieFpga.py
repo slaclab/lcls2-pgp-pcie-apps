@@ -10,13 +10,12 @@
 #-----------------------------------------------------------------------------
 import pyrogue as pr
 
-import axipcie                                 as pcie
-import lcls2_pgp_pcie_apps                     as dev
-import lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 as pgpCard
+import axipcie                 as pcie
+import lcls2_pgp_pcie_apps     as dev
+import lcls2_pgp_fw_lib.shared as shared
 
-class SlacPgpCardG4(pr.Device):
+class PcieFpga(pr.Device):
     def __init__(self,
-                 numLanes = 4,
                  pgp4     = False,
                  enLclsI  = True,
                  enLclsII = False,
@@ -26,24 +25,29 @@ class SlacPgpCardG4(pr.Device):
         # Core Layer
         self.add(pcie.AxiPcieCore(
             offset      = 0x0000_0000,
-            numDmaLanes = numLanes,
+            numDmaLanes = 4,
             expand      = False,
         ))
 
         # Application layer
         self.add(dev.Application(
             offset   = 0x00C0_0000,
-            numLanes = numLanes,
+            numLanes = 4,
             expand   = True,
         ))
 
         # Hardware Layer
-        self.add(pgpCard.SlacPgpCardG4Hsio(
-            name     = 'Hsio',
-            offset    = 0x0080_0000,
-            numLanes  = numLanes,
-            pgp4      = pgp4,
-            enLclsI   = enLclsI,
-            enLclsII  = enLclsII,
-            expand    = True,
+        self.add(shared.Hsio(
+            name       = 'Hsio',
+            offset     = 0x0080_0000,
+            pgp4       = pgp4,
+            enLclsI    = enLclsI,
+            enLclsII   = enLclsII,
+            expand     = True,
+            laneConfig = {
+                0: 'TBD',
+                1: 'TBD',
+                2: 'TBD',
+                3: 'TBD',
+            },
         ))

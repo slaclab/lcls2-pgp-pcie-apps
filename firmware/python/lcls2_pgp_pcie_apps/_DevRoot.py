@@ -14,10 +14,10 @@ import click
 
 import axipcie
 
-import lcls2_pgp_pcie_apps              as dev
-import lcls2_pgp_fw_lib.hardware.shared as shared
-import l2si_core                        as l2si
-import surf.protocols.batcher           as batcher
+import lcls2_pgp_pcie_apps     as pcieApp
+import lcls2_pgp_fw_lib.shared as shared
+import l2si_core               as l2si
+import surf.protocols.batcher  as batcher
 
 rogue.Version.minVersion('5.1.0')
 # rogue.Version.exactVersion('5.1.0')
@@ -36,15 +36,12 @@ class DevRoot(shared.Root):
                  dataVc         = 1,
                  pollEn         = True,  # Enable automatic polling registers
                  initRead       = True,  # Read all registers at start of the system
-                 numLanes       = 4,     # Number of PGP lanes
-                 devTarget      = dev.Kcu1500,
                  **kwargs):
 
         # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x01030000
+        self.FwVersionLock = 0x02000000
 
         # Set local variables
-        self.dev            = dev
         self.startupMode    = startupMode
         self.standAloneMode = standAloneMode
         self.dataVc         = dataVc
@@ -65,7 +62,6 @@ class DevRoot(shared.Root):
             pgp4        = pgp4,
             pollEn      = False if self.sim else pollEn,
             initRead    = False if self.sim else initRead,
-            numLanes    = numLanes,
             **kwargs)
 
         # Unhide the RemoteVariableDump command
@@ -76,10 +72,9 @@ class DevRoot(shared.Root):
         self.memMap.setName('PCIe_Bar0')
 
         # Instantiate the top level Device and pass it the memory map
-        self.add(devTarget(
+        self.add(pcieApp.PcieFpga(
             name     = 'DevPcie',
             memBase  = self.memMap,
-            numLanes = numLanes,
             pgp4     = pgp4,
             enLclsI  = enLclsI,
             enLclsII = enLclsII,
@@ -154,7 +149,7 @@ class DevRoot(shared.Root):
                     Please update PCIe firmware using software/scripts/updatePcieFpga.py
                     """
                 click.secho(errMsg, bg='red')
-                # raise ValueError(errMsg)
+                raise ValueError(errMsg)
 
             # Useful pointer
             timingRx = self.DevPcie.Hsio.TimingRx
@@ -194,7 +189,7 @@ class DevRoot(shared.Root):
                     self.LoadConfig(yamlFile)
 
             # Set the VC data tap
-            vcDataTap = self.find(typ=dev.VcDataTap)
+            vcDataTap = self.find(typ=pcieApp.VcDataTap)
             for devPtr in vcDataTap:
                 devPtr.Tap.set(self.dataVc)
 
