@@ -19,6 +19,7 @@ class PcieFpga(pr.Device):
                  pgp4     = False,
                  enLclsI  = True,
                  enLclsII = False,
+                 useDdr   = False,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -33,6 +34,7 @@ class PcieFpga(pr.Device):
         self.add(dev.Application(
             offset   = 0x00C0_0000,
             numLanes = 4,
+            useDdr   = useDdr,
             expand   = True,
         ))
 

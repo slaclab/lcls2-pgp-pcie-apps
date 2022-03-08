@@ -21,7 +21,6 @@ use surf.StdRtlPkg.all;
 use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
-use surf.Pgp3Pkg.all;
 
 entity AppLane is
    generic (

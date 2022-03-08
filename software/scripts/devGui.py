@@ -139,6 +139,12 @@ if __name__ == "__main__":
         help     = "Sets the GUI type (PyDM or PyQt)",
     )
 
+    parser.add_argument(
+        "--ddr",
+        action   = 'store_true',
+        help     = "Includes on-board DDR support",
+    )
+
     # Get the arguments
     args = parser.parse_args()
 
@@ -178,6 +184,7 @@ if __name__ == "__main__":
             yamlFileLclsII = args.yamlFileLclsII,
             startupMode    = args.startupMode,
             standAloneMode = args.standAloneMode,
+            useDdr         = args.ddr,
         ) as root:
 
         ######################
