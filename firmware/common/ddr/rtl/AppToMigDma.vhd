@@ -364,7 +364,7 @@ begin
         r.rdenb ='1' and
         r.rdIndex /= r.wcIndex) then
       raddr   := resize(r.rdIndex & toSlv(0,i), 32) + AXI_BASE_ADDR_G;
-      rlen                       := toSlv(dmaDesc.size,32);
+      rlen                       := resize(dmaDesc.size,rlen'length);
       v.rdDescReq.valid          := '1';
       v.rdDescReq.address        := resize(raddr,64);
       v.rdDescReq.size           := resize(rlen,32);
