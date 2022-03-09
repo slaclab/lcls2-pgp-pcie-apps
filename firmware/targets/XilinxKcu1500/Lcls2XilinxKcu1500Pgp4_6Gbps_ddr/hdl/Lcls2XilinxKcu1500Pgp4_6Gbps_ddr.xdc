@@ -18,6 +18,7 @@ set_clock_groups -asynchronous \
 #  Fix generated clocks from Kcu1500Hsio.xdc
 create_generated_clock -name clk25 [get_pins {U_axilClk/MmcmGen.U_Mmcm/CLKOUT2}]
 create_generated_clock -name clk156 [get_pins {U_axilClk/MmcmGen.U_Mmcm/CLKOUT1}]
+create_generated_clock -name clk200 [get_pins {U_axilClk/MmcmGen.U_Mmcm/CLKOUT0}]
 
 set_clock_groups -asynchronous \
 		 -group [get_clocks -include_generated_clocks {clk156}]  \
@@ -28,6 +29,9 @@ set_clock_groups -asynchronous \
 set_clock_groups -asynchronous \
 		 -group [get_clocks -include_generated_clocks {clk156}]  \
 		 -group [get_clocks -include_generated_clocks {timingGtRxOutClk1}] 
+set_clock_groups -asynchronous \
+		 -group [get_clocks -include_generated_clocks {clk156}]  \
+		 -group [get_clocks -include_generated_clocks {clk200}]
 
 #ERROR: [Place 30-716] Sub-optimal placement for a global clock-capable IO pin-BUFGCE-MMCM pair. If this sub optimal condition is acceptable for this design, you may use the CLOCK_DEDICATED_ROUTE constraint in the .xdc file to demote this message to a WARNING. However, the use of this override is highly discouraged. These examples can be used directly in the .xdc file to override this clock rule.
 
