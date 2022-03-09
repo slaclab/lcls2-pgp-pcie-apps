@@ -268,7 +268,7 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   U_App : entity work.Application
+   U_App : entity work.DdrApplication
       generic map (
          TPD_G             => TPD_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(APP_INDEX_C).baseAddr,
