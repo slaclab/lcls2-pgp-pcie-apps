@@ -159,7 +159,7 @@ begin
          SIMULATION_G      => ROGUE_SIM_EN_G,
          TYPE_G            => "MMCM",
          INPUT_BUFG_G      => true,
-         FB_BUFG_G         => true,
+         FB_BUFG_G         => false,
          RST_IN_POLARITY_G => '1',
          NUM_CLOCKS_G      => 3,
          -- MMCM attributes
