@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-08
+-- Last update: 2022-03-09
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -73,7 +73,7 @@ architecture mapping of AppToMigDma is
   signal mAxisMaster : AxiStreamMasterType;
   signal mAxisSlave  : AxiStreamSlaveType;
 
-  signal doutTransfer  : slv(22 downto 0);
+  signal doutTransfer  : slv(AXI_WRITE_DMA_DESC_RET_SIZE_C-1 downto 0);
   
   signal mPause  : sl;
   signal mFull   : sl;
@@ -90,7 +90,7 @@ architecture mapping of AppToMigDma is
     wrTag          : TagStateArray(15 downto 0);
     wrTransfer     : sl;
     wrTransferAddr : slv(BIS-1 downto 0);
-    wrTransferDin  : slv(22 downto 0);
+    wrTransferDin  : slv(AXI_WRITE_DMA_DESC_RET_SIZE_C-1 downto 0);
     rdenb          : sl;
     wrDescAck      : AxiWriteDmaDescAckType;
     wrDescRetAck   : sl;
@@ -266,7 +266,7 @@ begin
                axiWriteSlave  => mAxiWriteSlave );
                     
   U_TransferFifo : entity surf.SimpleDualPortRam
-    generic map ( DATA_WIDTH_G => 23,
+    generic map ( DATA_WIDTH_G => AXI_WRITE_DMA_DESC_RET_SIZE_C,
                   ADDR_WIDTH_G => BIS )
     port map ( clka       => mAxiClk,
                wea        => r.wrTransfer,
@@ -294,9 +294,12 @@ begin
     variable stag    : slv( 3 downto 0);
     variable itag    : integer;
     variable axiRstQ : slv( 2 downto 0) := (others=>'1');
+    variable dmaDesc : AxiWriteDmaDescRetType;
   begin
     v := r;
 
+    dmaDesc := toAxiWriteDmaDescRet(doutTransfer,'1');
+    
     v.wrTransfer               := '0';
     
     i := BLOCK_BASE_SIZE_C;
@@ -339,7 +342,7 @@ begin
     if wrDescRet.valid = '1' then
       v.wrTag(itag)      := COMPLETED_T;
       v.wrTransfer       := '1';
-      v.wrTransferDin    := resize(wrDescRet.size,23);
+      v.wrTransferDin    := toSlv(wrDescRet);
       if stag < r.wcIndex(3 downto 0) then
         v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
       else
@@ -361,11 +364,16 @@ begin
         r.rdenb ='1' and
         r.rdIndex /= r.wcIndex) then
       raddr   := resize(r.rdIndex & toSlv(0,i), 32) + AXI_BASE_ADDR_G;
-      rlen                       := doutTransfer;
+      rlen                       := dmaDesc.size;
       v.rdDescReq.valid          := '1';
       v.rdDescReq.address        := resize(raddr,64);
       v.rdDescReq.size           := resize(rlen,32);
       v.rdDescReq.buffId         := resize(r.rdIndex,32);
+      v.rdDescReq.firstUser      := dmaDesc.firstUser;
+      v.rdDescReq.lastUser       := dmaDesc.lastUser;
+      v.rdDescReq.continue       := dmaDesc.continue;
+      v.rdDescReq.id             := dmaDesc.id;
+      v.rdDescReq.dest           := dmaDesc.dest;
       v.rdIndex                  := r.rdIndex + 1;
     end if;
 
