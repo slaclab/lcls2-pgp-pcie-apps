@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Lcls2XilinxKcu1500Pgp4_6Gbps.vhd
+-- File       : Lcls2XilinxKcu1500Pgp4_6Gbps_ddr.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- Description: Camera link gateway PCIe card with PGPv2b
@@ -32,7 +32,7 @@ use axi_pcie_core.MigPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity Lcls2XilinxKcu1500Pgp4_6Gbps is
+entity Lcls2XilinxKcu1500Pgp4_6Gbps_ddr is
    generic (
       TPD_G          : time    := 1 ns;
       ROGUE_SIM_EN_G : boolean := false;
@@ -96,9 +96,9 @@ entity Lcls2XilinxKcu1500Pgp4_6Gbps is
       pciRxN       : in    slv(7 downto 0);
       pciTxP       : out   slv(7 downto 0);
       pciTxN       : out   slv(7 downto 0));
-end Lcls2XilinxKcu1500Pgp4_6Gbps;
+end Lcls2XilinxKcu1500Pgp4_6Gbps_ddr;
 
-architecture top_level of Lcls2XilinxKcu1500Pgp4_6Gbps is
+architecture top_level of Lcls2XilinxKcu1500Pgp4_6Gbps_ddr is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 64-bit interface
    constant AXIL_CLK_FREQ_C   : real                := 156.25E+6;  -- units of Hz
