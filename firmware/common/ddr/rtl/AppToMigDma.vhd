@@ -332,8 +332,8 @@ begin
         v.recvdQueCnt              := v.recvdQueCnt - 1;
         v.wrTag(itag)              := REQUESTED_T;
         v.wrDescAck.valid          := '1';
-        v.id                       := resize(wrDescReq.id,8);
-        v.dest                     := resize(wrDescReq.dest,8);
+        v.wid                      := resize(wrDescReq.id,8);
+        v.wdest                    := resize(wrDescReq.dest,8);
       end if;
     end if;
 

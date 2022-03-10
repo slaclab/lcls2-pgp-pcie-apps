@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-09
+-- Last update: 2022-03-10
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -33,10 +33,10 @@ use surf.AxiDmaPkg.all;
 use work.AppMigPkg.all;
 
 entity MigToPcieDma is
-   generic (  LANES_G          : integer          := 4;
-              MONCLKS_G        : integer          := 4;
-              AXIS_CONFIG_G    : AxiStreamConfigType;
-              DEBUG_G          : boolean          := false );
+   generic (  LANES_G           : integer          := 4;
+              MONCLKS_G         : integer          := 4;
+              AXIS_CONFIG_G     : AxiStreamConfigType;
+              DEBUG_G           : boolean          := false );
    port    ( -- Clock and reset
              axiClk           : in  sl; -- 200MHz
              axiRst           : in  sl; -- need a user reset to clear the pipeline
@@ -77,6 +77,7 @@ architecture mapping of MigToPcieDma is
   type RegType is record
     axilWriteSlave : AxiLiteWriteSlaveType;
     axilReadSlave  : AxiLiteReadSlaveType;
+    usrRst         : sl;
     migConfig      : MigConfigArray      (LANES_G-1 downto 0);
     readQueCnt     : Slv8Array           (LANES_G-1 downto 0);
     writeQueCnt    : Slv8Array           (LANES_G-1 downto 0);
@@ -100,6 +101,7 @@ architecture mapping of MigToPcieDma is
   constant REG_INIT_C : RegType := (
     axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
     axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
+    usrRst         => '0',
     migConfig      => (others=>MIG_CONFIG_INIT_C),
     readQueCnt     => (others=>(others=>'0')),
     writeQueCnt    => (others=>(others=>'0')),
@@ -171,8 +173,11 @@ begin
                  probe0(255 downto 166) => (others=>'0') );
   end generate;
 
-  usrRst <= axiRst;
-
+  U_SyncRst : entity surf.RstSync
+    port map (
+      clk      => axiClk,
+      asyncRst => r.usrRst,
+      syncRst  => usrRst );
   
   U_AxilAsync : entity surf.AxiLiteAsync
     port map ( sAxiClk         => axilClk,
@@ -282,6 +287,7 @@ begin
 
     regAddr := toSlv(0,12);
     axiSlaveRegister(regCon, regAddr, 0, v.monEnable );
+    axiSlaveRegister(regCon, regAddr, 1, v.usrRst );
 
     regAddr := toSlv(128,12);
     for i in 0 to LANES_G-1 loop
@@ -361,8 +367,8 @@ begin
           v.evCountDiff(8*i+7 downto 8*i) := v.evCount(i) - r.evCount(i);
         end if;
       end if;
-      v.vid  (i) := txaxisMasters(i).tId;
-      v.vdest(i) := txaxisMasters(i).tDest;
+      v.vid  (i) := taxisMasters(i).tId;
+      v.vdest(i) := taxisMasters(i).tDest;
     end loop;
     
     if axiRst = '1' then

@@ -235,7 +235,7 @@ begin
   U_Mig2Pcie : entity work.MigToPcieDma
        generic map ( LANES_G           => NUM_LANES_G,
                      MONCLKS_G         => 4,
-                     MIG_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
+                     AXIS_CONFIG_G     => AXIO_STREAM_CONFIG_C,
                      DEBUG_G           => false )
 --                     DEBUG_G          => (i<1) )
        port map ( axiClk          => clk200,
