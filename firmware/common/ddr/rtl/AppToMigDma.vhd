@@ -364,9 +364,9 @@ begin
       v.wcIndex     := r.wcIndex + 1;
     end if;
 
-    if r.wrTag(itag) := IDLE_T then
+    if r.wrTag(itag) = IDLE_T then
       v.wrTagWc := "00";
-    elsif r.wrTag(itag) := REQUESTED_T then
+    elsif r.wrTag(itag) = REQUESTED_T then
       v.wrTagWc := "01";
     else
       v.wrTagWc := "10";
