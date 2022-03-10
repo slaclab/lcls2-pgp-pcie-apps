@@ -59,7 +59,7 @@ package AppMigPkg is
       rdest            : slv(7 downto 0);
       wrTagWc          : slv(1 downto 0);
       wrDescRetId      : slv(3 downto 0);
-      wrTransAdddr     : slv(15 downto 0);
+      wrTransAddr      : slv(15 downto 0);
 
    end record;
 
