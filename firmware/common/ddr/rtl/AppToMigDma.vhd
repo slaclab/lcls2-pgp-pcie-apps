@@ -35,6 +35,7 @@ use work.AppMigPkg.all;
 
 entity AppToMigDma is
   generic ( AXI_BASE_ADDR_G     : slv(31 downto 0) := (others=>'0');
+            MIG_AXIS_CONFIG_G   : AxiStreamConfigType;
             SLAVE_AXIS_CONFIG_G : AxiStreamConfigType;
             DEBUG_G             : boolean          := false );
   port    ( -- Clock and reset
@@ -98,6 +99,10 @@ architecture mapping of AppToMigDma is
     rdDescRetAck   : sl;
     blocksFree     : slv(BIS-1 downto 0);
     tlast          : sl;
+    wid            : slv(7 downto 0);
+    wdest          : slv(7 downto 0);
+    rid            : slv(7 downto 0);
+    rdest          : slv(7 downto 0);
     recvdQueCnt    : slv(7 downto 0);
     writeQueCnt    : slv(7 downto 0);
   end record;
@@ -117,6 +122,10 @@ architecture mapping of AppToMigDma is
     rdDescRetAck   => '0',
     blocksFree     => (others=>'0'),
     tlast          => '1',
+    wid            => (others=>'1'),
+    wdest          => (others=>'1'),
+    rid            => (others=>'1'),
+    rdest          => (others=>'1'),
     recvdQueCnt    => (others=>'0'),
     writeQueCnt    => (others=>'0') );
 
@@ -127,16 +136,6 @@ architecture mapping of AppToMigDma is
   signal isPause     : sl;
   signal isFull      : sl;
   
-  -- DMA AXI Stream Configuration
-  constant AXIO_STREAM_CONFIG_C : AxiStreamConfigType := (
-      TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 16,
-      TDEST_BITS_C  => 0,
-      TID_BITS_C    => 0,
-      TKEEP_MODE_C  => TKEEP_NORMAL_C,
-      TUSER_BITS_C  => 2,
-      TUSER_MODE_C  => TUSER_NORMAL_C);
-
   component ila_0
     port ( clk          : in sl;
            probe0       : in slv(255 downto 0) );
@@ -210,7 +209,7 @@ begin
   U_AxisFifo : entity surf.AxiStreamFifoV2
     generic map ( FIFO_ADDR_WIDTH_G   => 8,
                   SLAVE_AXI_CONFIG_G  => SLAVE_AXIS_CONFIG_G,
-                  MASTER_AXI_CONFIG_G => AXIO_STREAM_CONFIG_C )
+                  MASTER_AXI_CONFIG_G => MIG_AXIS_CONFIG_G )
     port map ( sAxisClk    => sAxisClk,
                sAxisRst    => sAxisRst,
                sAxisMaster => sAxisMaster,
@@ -227,7 +226,7 @@ begin
             COMMON_CLK_G     => true,
             AXIS_CLK_FREQ_G  => 200.00E+6,
             AXIS_NUM_SLOTS_G => 1,
-            AXIS_CONFIG_G    => AXIO_STREAM_CONFIG_C)
+            AXIS_CONFIG_G    => MIG_AXIS_CONFIG_G)
          port map(
             -- AXIS Stream Interface
             axisClk          => mAxiClk,
@@ -250,7 +249,7 @@ begin
 
   U_DmaWrite : entity surf.AxiStreamDmaV2Write
     generic map ( AXI_READY_EN_G => true,
-                  AXIS_CONFIG_G  => AXIO_STREAM_CONFIG_C,
+                  AXIS_CONFIG_G  => MIG_AXIS_CONFIG_G,
                   AXI_CONFIG_G   => APP2MIG_AXI_CONFIG_C )
     port map ( axiClk         => mAxiClk,
                axiRst         => mAxiRst,
@@ -333,6 +332,8 @@ begin
         v.recvdQueCnt              := v.recvdQueCnt - 1;
         v.wrTag(itag)              := REQUESTED_T;
         v.wrDescAck.valid          := '1';
+        v.id                       := resize(wrDescReq.id,8);
+        v.dest                     := resize(wrDescReq.dest,8);
       end if;
     end if;
 
@@ -374,6 +375,8 @@ begin
       v.rdDescReq.continue       := dmaDesc.continue;
       v.rdDescReq.id             := dmaDesc.id;
       v.rdDescReq.dest           := dmaDesc.dest;
+      v.rid                      := dmaDesc.id;
+      v.rdest                    := dmaDesc.dest;
       v.rdIndex                  := r.rdIndex + 1;
     end if;
 
@@ -397,7 +400,11 @@ begin
     status.wrIndex            <= r.wrIndex;
     status.wcIndex            <= r.wcIndex;
     status.rdIndex            <= r.rdIndex;
-    
+    status.wid                <= r.wid;
+    status.wdest              <= r.wdest;
+    status.rid                <= r.rid;
+    status.rdest              <= r.rdest;
+      
     wrDescAck                 <= r.wrDescAck;
     wrDescRetAck              <= v.wrDescRetAck;
     rdDescReq                 <= r.rdDescReq;

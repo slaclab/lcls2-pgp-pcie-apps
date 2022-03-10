@@ -53,6 +53,10 @@ package AppMigPkg is
       blocksQueued     : slv(BLOCK_INDEX_SIZE_C-1 downto 0);
       blocksFree       : slv(BLOCK_INDEX_SIZE_C-1 downto 0);
       writeQueCnt      : slv(7 downto 0);
+      wid              : slv(7 downto 0);
+      wdest            : slv(7 downto 0);
+      rid              : slv(7 downto 0);
+      rdest            : slv(7 downto 0);
    end record;
 
    constant MIG_STATUS_INIT_C : MigStatusType := (
@@ -62,9 +66,13 @@ package AppMigPkg is
       rdIndex         => (others=>'0'),
       blocksQueued    => (others=>'0'),
       blocksFree      => (others=>'0'),
-      writeQueCnt     => (others=>'0') );
+      writeQueCnt     => (others=>'0'),
+      wid             => (others=>'0'),
+      wdest           => (others=>'0'),
+      rid             => (others=>'0'),
+      rdest           => (others=>'0'));
 
-   constant MIG_STATUS_BITS_C : integer := 9+5*BLOCK_INDEX_SIZE_C;
+   constant MIG_STATUS_BITS_C : integer := 41+5*BLOCK_INDEX_SIZE_C;
    -- Array
    type MigStatusArray is array (natural range<>) of MigStatusType;
 
@@ -92,6 +100,10 @@ package body AppMigPkg is
     assignSlv(i, vector, status.blocksQueued);
     assignSlv(i, vector, status.blocksFree);
     assignSlv(i, vector, status.writeQueCnt);
+    assignSlv(i, vector, status.wid);
+    assignSlv(i, vector, status.wdest);
+    assignSlv(i, vector, status.rid);
+    assignSlv(i, vector, status.rdest);
     return vector;
   end function;
 
@@ -106,6 +118,10 @@ package body AppMigPkg is
     assignRecord(i, vector, status.blocksQueued);
     assignRecord(i, vector, status.blocksFree);
     assignRecord(i, vector, status.writeQueCnt);
+    assignRecord(i, vector, status.wid);
+    assignRecord(i, vector, status.wdest);
+    assignRecord(i, vector, status.rid);
+    assignRecord(i, vector, status.rdest);
     return status;
   end function;
 

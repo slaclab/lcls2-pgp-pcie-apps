@@ -23,6 +23,7 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.AxiDmaPkg.all;
 use surf.Pgp4Pkg.all;
+use surf.SsiPkg.all;
 
 library axi_pcie_core;
 use axi_pcie_core.AxiPciePkg.all;
@@ -115,15 +116,8 @@ architecture mapping of DdrApplication is
    signal userReset        : sl;
    signal arst200, irst200, urst200 : sl;
 
-   constant AXIO_STREAM_CONFIG_C : AxiStreamConfigType := (
-     TSTRB_EN_C    => false,
-     TDATA_BYTES_C => 16,
-     TDEST_BITS_C  => 0,
-     TID_BITS_C    => 0,
-     TKEEP_MODE_C  => TKEEP_NORMAL_C,
-     TUSER_BITS_C  => 2,
-     TUSER_MODE_C  => TUSER_NORMAL_C);
-   
+   constant AXIO_STREAM_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 128-bit interface
+     
 begin
 
     -- Forcing BUFG for reset that's used everywhere      
@@ -203,7 +197,8 @@ begin
       
       U_HwDma : entity work.AppToMigDma
         generic map ( AXI_BASE_ADDR_G     => (toSlv(i,2) & toSlv(0,30)),
-                      SLAVE_AXIS_CONFIG_G => PGP4_AXIS_CONFIG_C )
+                      SLAVE_AXIS_CONFIG_G => PGP4_AXIS_CONFIG_C,
+                      MIG_AXIS_CONFIG_G   => AXIO_STREAM_CONFIG_C )
         port map ( sAxisClk        => appClk         (i),
                    sAxisRst        => appRst         (i),
                    sAxisMaster     => appIbMasters   (i),
@@ -238,10 +233,10 @@ begin
    end generate GEN_VEC;
 
   U_Mig2Pcie : entity work.MigToPcieDma
-       generic map ( LANES_G          => NUM_LANES_G,
-                     MONCLKS_G        => 4,
-                     AXIS_CONFIG_G    => AXIO_STREAM_CONFIG_C,
-                     DEBUG_G          => true )
+       generic map ( LANES_G           => NUM_LANES_G,
+                     MONCLKS_G         => 4,
+                     MIG_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
+                     DEBUG_G           => false )
 --                     DEBUG_G          => (i<1) )
        port map ( axiClk          => clk200,
                   axiRst          => arst200,

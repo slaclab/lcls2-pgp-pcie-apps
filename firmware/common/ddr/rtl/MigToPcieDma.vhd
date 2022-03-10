@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2019-03-28
+-- Last update: 2022-03-09
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -80,6 +80,9 @@ architecture mapping of MigToPcieDma is
     migConfig      : MigConfigArray      (LANES_G-1 downto 0);
     readQueCnt     : Slv8Array           (LANES_G-1 downto 0);
     writeQueCnt    : Slv8Array           (LANES_G-1 downto 0);
+    -- Monitoring
+    vid            : Slv8Array           (LANES_G-1 downto 0);
+    vdest          : Slv8Array           (LANES_G-1 downto 0);
     -- Diagnostics control
     monEnable      : sl;
     monSampleInt   : slv                 (15 downto 0);
@@ -100,6 +103,8 @@ architecture mapping of MigToPcieDma is
     migConfig      => (others=>MIG_CONFIG_INIT_C),
     readQueCnt     => (others=>(others=>'0')),
     writeQueCnt    => (others=>(others=>'0')),
+    vid            => (others=>(others=>'0')),
+    vdest          => (others=>(others=>'0')),
     monEnable      => '0',
     monSampleInt   => toSlv(200,16),     -- 1MHz
     monReadoutInt  => toSlv(1000000,20), -- 1MHz -> 1Hz
@@ -306,7 +311,19 @@ begin
       axiSlaveRegisterR(regCon, regAddr, 31, monClkLock(i));
       regAddr := regAddr + 4;
     end loop;
-      
+
+    regAddr := toSlv(384,12);
+    for i in 0 to LANES_G-1 loop
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wid);
+      axiSlaveRegisterR(regCon, regAddr, 8, migStatus(i).rid);
+      axiSlaveRegisterR(regCon, regAddr, 16, r.vid(i));
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wdest);
+      axiSlaveRegisterR(regCon, regAddr, 8, migStatus(i).rdest);
+      axiSlaveRegisterR(regCon, regAddr, 16, r.vdest(i));
+      regAddr := regAddr + 4;
+    end loop;
+    
     -- End transaction block
     axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave);
 
@@ -344,6 +361,8 @@ begin
           v.evCountDiff(8*i+7 downto 8*i) := v.evCount(i) - r.evCount(i);
         end if;
       end if;
+      v.vid  (i) := txaxisMasters(i).tId;
+      v.vdest(i) := txaxisMasters(i).tDest;
     end loop;
     
     if axiRst = '1' then
