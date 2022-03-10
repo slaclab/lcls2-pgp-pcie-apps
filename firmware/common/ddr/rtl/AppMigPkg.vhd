@@ -57,6 +57,10 @@ package AppMigPkg is
       wdest            : slv(7 downto 0);
       rid              : slv(7 downto 0);
       rdest            : slv(7 downto 0);
+      wrTagWc          : slv(1 downto 0);
+      wrDescRetId      : slv(3 downto 0);
+      wrTransAdddr     : slv(15 downto 0);
+
    end record;
 
    constant MIG_STATUS_INIT_C : MigStatusType := (
@@ -70,9 +74,12 @@ package AppMigPkg is
       wid             => (others=>'0'),
       wdest           => (others=>'0'),
       rid             => (others=>'0'),
-      rdest           => (others=>'0'));
+      rdest           => (others=>'0'),
+      wrTagWc         => (others=>'0'),
+      wrDescRetId     => (others=>'0'),
+      wrTransAddr     => (others=>'0'));
 
-   constant MIG_STATUS_BITS_C : integer := 41+5*BLOCK_INDEX_SIZE_C;
+   constant MIG_STATUS_BITS_C : integer := 63+5*BLOCK_INDEX_SIZE_C;
    -- Array
    type MigStatusArray is array (natural range<>) of MigStatusType;
 
@@ -104,6 +111,9 @@ package body AppMigPkg is
     assignSlv(i, vector, status.wdest);
     assignSlv(i, vector, status.rid);
     assignSlv(i, vector, status.rdest);
+    assignSlv(i, vector, status.wrTagWc);
+    assignSlv(i, vector, status.wrDescRetId);
+    assignSlv(i, vector, status.wrTransAddr);
     return vector;
   end function;
 
@@ -122,6 +132,9 @@ package body AppMigPkg is
     assignRecord(i, vector, status.wdest);
     assignRecord(i, vector, status.rid);
     assignRecord(i, vector, status.rdest);
+    assignRecord(i, vector, status.wrTagWc);
+    assignRecord(i, vector, status.wrDescRetId);
+    assignRecord(i, vector, status.wrTransAddr);
     return status;
   end function;
 

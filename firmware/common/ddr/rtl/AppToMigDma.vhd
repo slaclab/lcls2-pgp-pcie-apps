@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-09
+-- Last update: 2022-03-10
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -105,6 +105,9 @@ architecture mapping of AppToMigDma is
     rdest          : slv(7 downto 0);
     recvdQueCnt    : slv(7 downto 0);
     writeQueCnt    : slv(7 downto 0);
+    wrTagWc        : slv(1 downto 0);
+    wrDescRetId    : slv(3 downto 0);
+    wrTransAdddr   : slv(15 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -127,7 +130,10 @@ architecture mapping of AppToMigDma is
     rid            => (others=>'1'),
     rdest          => (others=>'1'),
     recvdQueCnt    => (others=>'0'),
-    writeQueCnt    => (others=>'0') );
+    writeQueCnt    => (others=>'0'),
+    wrTagWc        => (others=>'0'),
+    wrDescRetId    => (others=>'0'),
+    wrTransAdddr   => (others=>'0') );
 
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
@@ -327,7 +333,7 @@ begin
       v.wrDescAck.buffId  := toSlv(itag,32);
       if (r.wrTag(itag) = IDLE_T and
           r.recvdQueCnt /= 0 and
-          r.wrIndex + 16 /= r.rdIndex) then  -- prevent overwrite
+          resize(r.wrIndex + 16,BIS) /= r.rdIndex) then  -- prevent overwrite
         v.wrIndex                  := r.wrIndex + 1;
         v.recvdQueCnt              := v.recvdQueCnt - 1;
         v.wrTag(itag)              := REQUESTED_T;
@@ -349,6 +355,7 @@ begin
       else
         v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
       end if;
+      v.wrDescRetId := stag;
     end if;
     
     itag := conv_integer(r.wcIndex(3 downto 0));
@@ -357,6 +364,14 @@ begin
       v.wcIndex     := r.wcIndex + 1;
     end if;
 
+    if r.wrTag(itag) := IDLE_T then
+      v.wrTagWc := "00";
+    elsif r.wrTag(itag) := REQUESTED_T then
+      v.wrTagWc := "01";
+    else
+      v.wrTagWc := "10";
+    end if;
+      
     if rdDescReqAck='1' then
       v.rdDescReq.valid := '0';
     end if;
@@ -400,11 +415,16 @@ begin
     status.wrIndex            <= r.wrIndex;
     status.wcIndex            <= r.wcIndex;
     status.rdIndex            <= r.rdIndex;
+    
     status.wid                <= r.wid;
     status.wdest              <= r.wdest;
     status.rid                <= r.rid;
     status.rdest              <= r.rdest;
-      
+
+    status.wrTagWc            <= r.wrTagWc;
+    status.wrDescRetId        <= r.wrDescRetId;
+    status.wrTransAddr        <= resize(r.wrTransferAddr,16);
+    
     wrDescAck                 <= r.wrDescAck;
     wrDescRetAck              <= v.wrDescRetAck;
     rdDescReq                 <= r.rdDescReq;
