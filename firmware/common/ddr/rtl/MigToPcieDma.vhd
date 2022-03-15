@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-10
+-- Last update: 2022-03-15
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -327,6 +327,11 @@ begin
       axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wdest);
       axiSlaveRegisterR(regCon, regAddr, 8, migStatus(i).rdest);
       axiSlaveRegisterR(regCon, regAddr, 16, r.vdest(i));
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wrTransAddr);
+      axiSlaveRegisterR(regCon, regAddr,16, migStatus(i).wrTagWc);
+      axiSlaveRegisterR(regCon, regAddr,24, migStatus(i).wrDescRetId);
+      regAddr := regAddr + 4;
       regAddr := regAddr + 4;
     end loop;
     

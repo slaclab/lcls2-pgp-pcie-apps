@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-10
+-- Last update: 2022-03-15
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -345,16 +345,17 @@ begin
 
     stag := wrDescRet.buffId(3 downto 0);
     itag := conv_integer(stag);
-    v.wrDescRetAck := wrDescRet.valid;
+    v.wrDescRetAck := wrDescRet.valid;  -- assumes wrDescRet.valid is registered
     if wrDescRet.valid = '1' then
       v.wrTag(itag)      := COMPLETED_T;
       v.wrTransfer       := '1';
       v.wrTransferDin    := toSlv(wrDescRet);
-      if stag < r.wcIndex(3 downto 0) then
-        v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
-      else
-        v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
-      end if;
+      -- if stag < r.wcIndex(3 downto 0) then
+      --   v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
+      -- else
+      --   v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
+      -- end if;
+      v.wrTransferAddr := wrDescRet.buffId(BIS-1 downto 0);
       v.wrDescRetId := stag;
     end if;
     
