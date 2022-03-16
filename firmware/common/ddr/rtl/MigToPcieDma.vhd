@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-15
+-- Last update: 2022-03-16
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -332,6 +332,23 @@ begin
       axiSlaveRegisterR(regCon, regAddr,16, migStatus(i).wrTagWc);
       axiSlaveRegisterR(regCon, regAddr,24, migStatus(i).wrDescRetId);
       regAddr := regAddr + 4;
+      axiSlaveRegister (regCon, regAddr, 0, migConfig(i).wrTagIndex);
+      regAddr := regAddr + 4;
+      axiSlaveRegister (regCon, regAddr, 0, migConfig(i).rdAddr);
+      axiSlaveRegister (regCon, regAddr,31, migConfig(i).rdEnable);
+      regAddr := regAddr + 4;
+      dmaDesc := toAxiWriteDmaDescRet(migStatus(i).rdData);
+      axiSlaveRegisterR(regCon, regAddr,  0, dmaDesc.buffId(30 downto 0));
+      axiSlaveRegisterR(regCon, regAddr, 31, dmaDesc.valid);
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr,  0, dmaDesc.size);
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr,  0, dmaDesc.firstUser(1 downto 0));
+      axiSlaveRegisterR(regCon, regAddr,  2, dmaDesc.lastUser (1 downto 0));
+      axiSlaveRegisterR(regCon, regAddr,  4, dmaDesc.continue)
+      axiSlaveRegisterR(regCon, regAddr,  5, dmaDesc.result)
+      axiSlaveRegisterR(regCon, regAddr,  8, dmaDesc.dest)
+      axiSlaveRegisterR(regCon, regAddr, 16, dmaDesc.id)
       regAddr := regAddr + 4;
     end loop;
     

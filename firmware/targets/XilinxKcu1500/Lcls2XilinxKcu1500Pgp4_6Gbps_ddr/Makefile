@@ -8,8 +8,6 @@ target: prom
 # which requires me to define the TOP_DIR path
 export TOP_DIR = $(abspath $(PWD)/../../..)
 
-export INCLUDE_PGP4_6G = 1
-
 # Use top level makefile
 include $(TOP_DIR)/targets/shared_config.mk
 include $(TOP_DIR)/submodules/ruckus/system_vivado.mk

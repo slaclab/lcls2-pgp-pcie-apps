@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-15
+-- Last update: 2022-03-16
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -107,7 +107,6 @@ architecture mapping of AppToMigDma is
     writeQueCnt    : slv(7 downto 0);
     wrTagWc        : slv(1 downto 0);
     wrDescRetId    : slv(3 downto 0);
-    wrTransAdddr   : slv(15 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -132,8 +131,7 @@ architecture mapping of AppToMigDma is
     recvdQueCnt    => (others=>'0'),
     writeQueCnt    => (others=>'0'),
     wrTagWc        => (others=>'0'),
-    wrDescRetId    => (others=>'0'),
-    wrTransAdddr   => (others=>'0') );
+    wrDescRetId    => (others=>'0') );
 
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
@@ -157,6 +155,9 @@ architecture mapping of AppToMigDma is
   signal wrDescAck    : AxiWriteDmaDescAckType;
   signal wrDescRet    : AxiWriteDmaDescRetType;
   signal wrDescRetAck : sl;
+
+  signal wrTagIndexS  : slv(3 downto 0);
+  signal rdAddrS      : slv(BIS-1 downto 0);
   
 begin
 
@@ -208,6 +209,12 @@ begin
                rst     => mAxiRst,
                dataIn  => memReady,
                dataOut => status.memReady );
+
+  U_WrTagIndex : entity surf.SynchronizerVector
+    generic map ( WIDTH_G => 4 )
+    port map ( clk     => mAxiClk,
+               dataIn  => config.wrTagIndex,
+               dataOut => wrTagIndexS );
   
   --
   --  Insert a fifo to cross clock domains
@@ -282,6 +289,18 @@ begin
                addrb      => rdTransferAddr,
                doutb      => doutTransfer );
 
+  U_TransferFifoCopy : entity surf.SimpleDualPortRam
+    generic map ( DATA_WIDTH_G => AXI_WRITE_DMA_DESC_RET_SIZE_C,
+                  ADDR_WIDTH_G => BIS )
+    port map ( clka       => mAxiClk,
+               wea        => r.wrTransfer,
+               addra      => r.wrTransferAddr,
+               dina       => r.wrTransferDin,
+               clkb       => axilClk,
+               enb        => config.rdEnable,
+               addrb      => config.rdAddr,
+               doutb      => status.rdData );
+
   comb : process ( r, mAxiRst,
                    mAxisMaster, mAxisSlave,
                    wrDescReq,
@@ -289,7 +308,7 @@ begin
                    rdDescReqAck,
                    rdDescRet,
                    doutTransfer ,
-                   config ) is
+                   wrTagIndexS ) is
     variable v       : RegType;
     variable i       : integer;
     variable wlen    : slv(22 downto 0);
@@ -350,12 +369,12 @@ begin
       v.wrTag(itag)      := COMPLETED_T;
       v.wrTransfer       := '1';
       v.wrTransferDin    := toSlv(wrDescRet);
-      -- if stag < r.wcIndex(3 downto 0) then
-      --   v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
-      -- else
-      --   v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
-      -- end if;
-      v.wrTransferAddr := wrDescRet.buffId(BIS-1 downto 0);
+      if stag < r.wcIndex(3 downto 0) then
+        v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
+      else
+        v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
+      end if;
+--      v.wrTransferAddr := wrDescRet.buffId(BIS-1 downto 0);
       v.wrDescRetId := stag;
     end if;
     
@@ -365,6 +384,7 @@ begin
       v.wcIndex     := r.wcIndex + 1;
     end if;
 
+    itag := conv_integer(wrTagIndexS);
     if r.wrTag(itag) = IDLE_T then
       v.wrTagWc := "00";
     elsif r.wrTag(itag) = REQUESTED_T then

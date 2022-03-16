@@ -23,6 +23,7 @@ use ieee.std_logic_1164.all;
 library surf;
 use surf.StdRtlPkg.all;
 use surf.AxiPkg.all;
+use surf.AxiDmaPkg.all;
 
 package AppMigPkg is
 
@@ -33,13 +34,19 @@ package AppMigPkg is
      blockSize   : slv(3 downto 0);
      blocksPause : slv(BLOCK_INDEX_SIZE_C-1 downto 0);
      inhibit     : sl;
+     wrTagIndex  : slv(3 downto 0);
+     rdEnable    : sl;
+     rdAddr      : slv(BLOCK_INDEX_SIZE_C-1 downto 0);
    end record;
 
    -- Initialization constants
    constant MIG_CONFIG_INIT_C : MigConfigType := ( 
      blockSize   => toSlv(4,4),  -- 2MB
      blocksPause => toSlv(64,BLOCK_INDEX_SIZE_C),
-     inhibit     => '1' );
+     inhibit     => '1',
+     wrTagIndex  => (others=>'0'),
+     rdEnable    => '0',
+     rdAddr      => (others=>'0') );
 
    -- Array
    type MigConfigArray is array (natural range<>) of MigConfigType;
@@ -60,6 +67,8 @@ package AppMigPkg is
       wrTagWc          : slv(1 downto 0);
       wrDescRetId      : slv(3 downto 0);
       wrTransAddr      : slv(15 downto 0);
+      rdData           : slv(AXI_WRITE_DMA_DESC_RET_SIZE_C-1 downto 0) );
+
 
    end record;
 
@@ -77,9 +86,10 @@ package AppMigPkg is
       rdest           => (others=>'0'),
       wrTagWc         => (others=>'0'),
       wrDescRetId     => (others=>'0'),
-      wrTransAddr     => (others=>'0'));
+      wrTransAddr     => (others=>'0'),
+      rdData          => (others=>'0'));
 
-   constant MIG_STATUS_BITS_C : integer := 63+5*BLOCK_INDEX_SIZE_C;
+   constant MIG_STATUS_BITS_C : integer := 63+5*BLOCK_INDEX_SIZE_C+AXI_WRITE_DMA_DESC_RET_SIZE_C;
    -- Array
    type MigStatusArray is array (natural range<>) of MigStatusType;
 
@@ -114,6 +124,7 @@ package body AppMigPkg is
     assignSlv(i, vector, status.wrTagWc);
     assignSlv(i, vector, status.wrDescRetId);
     assignSlv(i, vector, status.wrTransAddr);
+    assignSlv(i, vector, status.rdData);
     return vector;
   end function;
 
@@ -135,6 +146,7 @@ package body AppMigPkg is
     assignRecord(i, vector, status.wrTagWc);
     assignRecord(i, vector, status.wrDescRetId);
     assignRecord(i, vector, status.wrTransAddr);
+    assignRecord(i, vector, status.rdData);
     return status;
   end function;
 
