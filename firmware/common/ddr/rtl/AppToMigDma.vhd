@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2022-03-16
+-- Last update: 2022-03-17
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -158,7 +158,7 @@ architecture mapping of AppToMigDma is
 
   signal wrTagIndexS  : slv(3 downto 0);
   signal rdAddrS      : slv(BIS-1 downto 0);
-  
+
 begin
 
   GEN_DEBUG : if DEBUG_G generate
@@ -270,8 +270,15 @@ begin
                dmaWrDescAck   => wrDescAck,
                dmaWrDescRet   => wrDescRet,
                dmaWrDescRetAck=> wrDescRetAck,
-               dmaWrIdle      => open,
-               axiCache       => x"3",
+               dmaWrIdle      => status.dmaWrStatus(0),
+               dmaWrReq       => status.dmaWrStatus(1),
+               dmaWrAddr      => status.dmaWrStatus(2),
+               dmaWrMove      => status.dmaWrStatus(3),
+               dmaWrPad       => status.dmaWrStatus(4),
+               dmaWrMeta      => status.dmaWrStatus(5),
+               dmaWrReturn    => status.dmaWrStatus(6),
+               dmaWrDump      => status.dmaWrStatus(7),
+              axiCache       => x"3",
                axisMaster     => mAxisMaster,
                axisSlave      => mAxisSlave,
                axiWriteMaster => mAxiWriteMaster,
@@ -297,7 +304,7 @@ begin
                addra      => r.wrTransferAddr,
                dina       => r.wrTransferDin,
                clkb       => axilClk,
-               enb        => config.rdEnable,
+               enb        => '1',
                addrb      => config.rdAddr,
                doutb      => status.rdData );
 
