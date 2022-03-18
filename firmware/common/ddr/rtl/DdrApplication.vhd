@@ -215,9 +215,7 @@ begin
                    rdDescRetAck    => rdDescRetAck   (i),
                    memReady        => memReady       (i mod 2),
                    config          => migConfig      (i),
-                   status          => migStatus      (i),
-                   axilClk         => axilClk,
-                   axilRst         => axilRst );
+                   status          => migStatus      (i) );
       U_ObFifo : entity surf.AxiStreamFifoV2
         generic map ( FIFO_ADDR_WIDTH_G   => 4,
                       SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
