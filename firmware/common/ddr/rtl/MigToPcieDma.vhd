@@ -282,7 +282,7 @@ begin
      
   comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster, migStatus,
                    monClkRate, monClkLock, monClkFast, monClkSlow,
-                   taxisMasters, axisSlaves) is
+                   taxisMasters, axisSlaves, dmaWrStatus) is
     variable v       : RegType;
     variable regCon  : AxiLiteEndPointType;
     variable regAddr : slv(11 downto 0);
