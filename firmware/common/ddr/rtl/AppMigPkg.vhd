@@ -71,7 +71,7 @@ package AppMigPkg is
       wid             => (others=>'0'),
       wdest           => (others=>'0'),
       rid             => (others=>'0'),
-      rdest           => (others=>'0'),
+      rdest           => (others=>'0'));
 
    constant MIG_STATUS_BITS_C : integer := 41+5*BLOCK_INDEX_SIZE_C;
    -- Array
