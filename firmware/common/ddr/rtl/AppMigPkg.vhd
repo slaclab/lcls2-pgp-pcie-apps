@@ -105,8 +105,6 @@ package body AppMigPkg is
     assignSlv(i, vector, status.wdest);
     assignSlv(i, vector, status.rid);
     assignSlv(i, vector, status.rdest);
-    assignSlv(i, vector, status.wrTransAddr);
-    assignSlv(i, vector, status.rdData);
     return vector;
   end function;
 
@@ -125,8 +123,6 @@ package body AppMigPkg is
     assignRecord(i, vector, status.wdest);
     assignRecord(i, vector, status.rid);
     assignRecord(i, vector, status.rdest);
-    assignRecord(i, vector, status.wrTransAddr);
-    assignRecord(i, vector, status.rdData);
     return status;
   end function;
 
