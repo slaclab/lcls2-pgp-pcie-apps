@@ -345,20 +345,27 @@ begin
       end if;
       v.tlast := mAxisMaster.tLast;
     end if;
+
+    if (wrDescReq.valid = '0') then
+      v.wrDescAck.valid := '0';
+    end if;
+
+    if (wrDescRet.valid = '0') then
+      v.wrDescRetAck := '0';
+    end if;
     
     itag := conv_integer(r.wrIndex(3 downto 0));
-    if (wrDescReq.valid = '1') then
+    if (wrDescReq.valid = '1' and r.wrDescAck.valid = '0') then
       waddr   := resize(r.wrIndex & toSlv(0,i), 32) + AXI_BASE_ADDR_G;
       wlen    := (others=>'0');
       wlen(i) := '1';
-      v.wrDescAck.valid   := '0';
       v.wrDescAck.address := resize(waddr,64);
       v.wrDescAck.dropEn  := '0';
       v.wrDescAck.maxSize := resize(wlen,32);
       v.wrDescAck.contEn  := '1';
       v.wrDescAck.buffId  := toSlv(itag,32);
       if (r.wrTag(itag) = IDLE_T and
-          r.recvdQueCnt /= 0 and
+--          r.recvdQueCnt /= 0 and
           resize(r.wrIndex + 16,BIS) /= r.rdIndex) then  -- prevent overwrite
         v.wrIndex                  := r.wrIndex + 1;
         v.recvdQueCnt              := v.recvdQueCnt - 1;
@@ -371,8 +378,8 @@ begin
 
     stag := wrDescRet.buffId(3 downto 0);
     itag := conv_integer(stag);
-    v.wrDescRetAck := wrDescRet.valid;  -- assumes wrDescRet.valid is registered
-    if wrDescRet.valid = '1' then
+    if (wrDescRet.valid = '1' and r.wrDescRetAck = '0') then
+      v.wrDescRetAck     := '1';
       v.wrTag(itag)      := COMPLETED_T;
       v.wrTransfer       := '1';
       v.wrTransferDin    := toSlv(wrDescRet);
@@ -429,9 +436,13 @@ begin
     else
       v.rdenb := '1';
     end if;
+
+    if (rdDescRet.valid = '0') then
+      v.rdDescRetAck := '0';
+    end if;
     
-    v.rdDescRetAck := rdDescRet.valid;
-    if (rdDescRet.valid = '1') then
+    if (rdDescRet.valid = '1' and r.rdDescRetAck = '0') then
+      v.rdDescRetAck := '1';
       v.writeQueCnt := v.writeQueCnt + 1;
     end if;
 
@@ -439,7 +450,7 @@ begin
 
     status.blocksFree         <= r.blocksFree;
     status.blocksQueued       <= resize(r.wrIndex - r.rdIndex, BIS);
-    status.writeQueCnt        <= r.writeQueCnt;
+    status.writeQueCnt        <= r.recvdQueCnt;  -- something going on here
     status.wrIndex            <= r.wrIndex;
     status.wcIndex            <= r.wcIndex;
     status.rdIndex            <= r.rdIndex;
