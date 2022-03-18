@@ -59,14 +59,7 @@ entity AppToMigDma is
     memReady         : in  sl := '0';
     config           : in  MigConfigType;
     -- Status
-    status           : out MigStatusType;
-    -- DMA Monitoring
-    axilClk          : in  sl := '0';
-    axilRst          : in  sl := '0';
-    axilWriteMaster  : in  AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
-    axilWriteSlave   : out AxiLiteWriteSlaveType;
-    axilReadMaster   : in  AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
-    axilReadSlave    : out AxiLiteReadSlaveType );
+    status           : out MigStatusType );
 end AppToMigDma;
 
 architecture mapping of AppToMigDma is
@@ -98,15 +91,11 @@ architecture mapping of AppToMigDma is
     rdDescReq      : AxiReadDmaDescReqType;
     rdDescRetAck   : sl;
     blocksFree     : slv(BIS-1 downto 0);
-    tlast          : sl;
     wid            : slv(7 downto 0);
     wdest          : slv(7 downto 0);
     rid            : slv(7 downto 0);
     rdest          : slv(7 downto 0);
-    recvdQueCnt    : slv(7 downto 0);
     writeQueCnt    : slv(7 downto 0);
-    wrTagWc        : slv(1 downto 0);
-    wrDescRetId    : slv(3 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -123,15 +112,11 @@ architecture mapping of AppToMigDma is
     rdDescReq      => AXI_READ_DMA_DESC_REQ_INIT_C,
     rdDescRetAck   => '0',
     blocksFree     => (others=>'0'),
-    tlast          => '1',
     wid            => (others=>'1'),
     wdest          => (others=>'1'),
     rid            => (others=>'1'),
     rdest          => (others=>'1'),
-    recvdQueCnt    => (others=>'0'),
-    writeQueCnt    => (others=>'0'),
-    wrTagWc        => (others=>'0'),
-    wrDescRetId    => (others=>'0') );
+    writeQueCnt    => (others=>'0'));
 
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
@@ -140,14 +125,6 @@ architecture mapping of AppToMigDma is
   signal isPause     : sl;
   signal isFull      : sl;
   
-  component ila_0
-    port ( clk          : in sl;
-           probe0       : in slv(255 downto 0) );
-  end component;
-
-  signal sBlocksFree   : slv(BIS-1 downto 0);
-  signal sBlocksFreeD  : slv(9 downto 0);
-
   signal rdenb          : sl;
   signal rdTransferAddr : slv(BIS-1 downto 0);  -- read complete
 
@@ -156,27 +133,7 @@ architecture mapping of AppToMigDma is
   signal wrDescRet    : AxiWriteDmaDescRetType;
   signal wrDescRetAck : sl;
 
-  signal wrTagIndexS  : slv(3 downto 0);
-  signal rdAddrS      : slv(BIS-1 downto 0);
-
 begin
-
-  GEN_DEBUG : if DEBUG_G generate
-    sBlocksFreeD <= resize(sBlocksFree,10);
-    U_ILA_APP : ila_0
-      port map ( clk          => sAxisClk,
-                 probe0(0)    => sAxisRst,
-                 probe0(1)    => sAxisMaster.tValid,
-                 probe0(2)    => sAxisMaster.tLast,
-                 probe0(3)    => isAxisSlave.tReady,
-                 probe0(4)    => isPause,
-                 probe0( 68 downto  5) => sAxisMaster.tData(63 downto 0),
-                 probe0( 76 downto 69) => (others=>'0'),
-                 probe0( 77 )          => '0',
-                 probe0( 78 )          => isFull,
-                 probe0( 88 downto 79) => sBlocksFreeD,
-                 probe0(255 downto 89) => (others=>'0') );
-  end generate;
 
   sAxisSlave                <= isAxisSlave;
   sAlmostFull               <= isPause;
@@ -185,13 +142,6 @@ begin
   mPause <= '1' when (r.blocksFree < config.blocksPause) else '0';
   mFull  <= '1' when ((r.blocksFree < 4) or (config.inhibit='1')) else '0';
 
-  U_Free  : entity surf.SynchronizerFifo
-    generic map ( DATA_WIDTH_G => BIS )
-    port map ( wr_clk  => mAxiClk,
-               din     => r.blocksFree,
-               rd_clk  => sAxisClk,
-               dout    => sBlocksFree );
-  
   U_Pause : entity surf.Synchronizer
     port map ( clk     => sAxisClk,
                rst     => sAxisRst,
@@ -210,15 +160,6 @@ begin
                dataIn  => memReady,
                dataOut => status.memReady );
 
-  U_WrTagIndex : entity surf.SynchronizerVector
-    generic map ( WIDTH_G => 4 )
-    port map ( clk     => mAxiClk,
-               dataIn  => config.wrTagIndex,
-               dataOut => wrTagIndexS );
-  
-  --
-  --  Insert a fifo to cross clock domains
-  --
   U_AxisFifo : entity surf.AxiStreamFifoV2
     generic map ( FIFO_ADDR_WIDTH_G   => 8,
                   SLAVE_AXI_CONFIG_G  => SLAVE_AXIS_CONFIG_G,
@@ -233,33 +174,6 @@ begin
                mAxisMaster => mAxisMaster,
                mAxisSlave  => mAxisSlave );
 
-  GEN_DMA_DEBUG : if DEBUG_G generate
-      DMA_AXIS_MON_IB : entity surf.AxiStreamMonAxiL
-         generic map(
-            COMMON_CLK_G     => true,
-            AXIS_CLK_FREQ_G  => 200.00E+6,
-            AXIS_NUM_SLOTS_G => 1,
-            AXIS_CONFIG_G    => MIG_AXIS_CONFIG_G)
-         port map(
-            -- AXIS Stream Interface
-            axisClk          => mAxiClk,
-            axisRst          => mAxiRst,
-            axisMasters  (0) => mAxisMaster,
-            axisSlaves   (0) => mAxisSlave,
-            -- AXI lite slave port for register access
-            axilClk          => axilClk,
-            axilRst          => axilRst,
-            sAxilWriteMaster => axilWriteMaster,
-            sAxilWriteSlave  => axilWriteSlave,
-            sAxilReadMaster  => axilReadMaster,
-            sAxilReadSlave   => axilReadSlave );
-  end generate;
-
-  GEN_NO_DMA_DEBUG : if not DEBUG_G generate
-    axilWriteSlave <= AXI_LITE_WRITE_SLAVE_INIT_C;
-    axilReadSlave  <= AXI_LITE_READ_SLAVE_INIT_C;
-  end generate;
-
   U_DmaWrite : entity surf.AxiStreamDmaV2Write
     generic map ( AXI_READY_EN_G => true,
                   AXIS_CONFIG_G  => MIG_AXIS_CONFIG_G,
@@ -270,15 +184,7 @@ begin
                dmaWrDescAck   => wrDescAck,
                dmaWrDescRet   => wrDescRet,
                dmaWrDescRetAck=> wrDescRetAck,
-               dmaWrIdle      => status.dmaWrStatus(0),
-               dmaWrReq       => status.dmaWrStatus(1),
-               dmaWrAddr      => status.dmaWrStatus(2),
-               dmaWrMove      => status.dmaWrStatus(3),
-               dmaWrPad       => status.dmaWrStatus(4),
-               dmaWrMeta      => status.dmaWrStatus(5),
-               dmaWrReturn    => status.dmaWrStatus(6),
-               dmaWrDump      => status.dmaWrStatus(7),
-              axiCache       => x"3",
+               axiCache       => x"3",
                axisMaster     => mAxisMaster,
                axisSlave      => mAxisSlave,
                axiWriteMaster => mAxiWriteMaster,
@@ -296,26 +202,13 @@ begin
                addrb      => rdTransferAddr,
                doutb      => doutTransfer );
 
-  U_TransferFifoCopy : entity surf.SimpleDualPortRam
-    generic map ( DATA_WIDTH_G => AXI_WRITE_DMA_DESC_RET_SIZE_C,
-                  ADDR_WIDTH_G => BIS )
-    port map ( clka       => mAxiClk,
-               wea        => r.wrTransfer,
-               addra      => r.wrTransferAddr,
-               dina       => r.wrTransferDin,
-               clkb       => axilClk,
-               enb        => '1',
-               addrb      => config.rdAddr,
-               doutb      => status.rdData );
-
   comb : process ( r, mAxiRst,
                    mAxisMaster, mAxisSlave,
                    wrDescReq,
                    wrDescRet,
                    rdDescReqAck,
                    rdDescRet,
-                   doutTransfer ,
-                   wrTagIndexS ) is
+                   doutTransfer ) is
     variable v       : RegType;
     variable i       : integer;
     variable wlen    : slv(22 downto 0);
@@ -335,17 +228,6 @@ begin
     
     i := BLOCK_BASE_SIZE_C;
     
-    --
-    --  Stuff a new block address into the Axi engine
-    --    on the first transfer of a new frame
-    if (mAxisMaster.tValid = '1' and
-        mAxisSlave.tReady  = '1') then
-      if r.tlast = '1' then
-        v.recvdQueCnt := v.recvdQueCnt + 1;
-      end if;
-      v.tlast := mAxisMaster.tLast;
-    end if;
-
     if (wrDescReq.valid = '0') then
       v.wrDescAck.valid := '0';
     end if;
@@ -365,10 +247,8 @@ begin
       v.wrDescAck.contEn  := '1';
       v.wrDescAck.buffId  := toSlv(itag,32);
       if (r.wrTag(itag) = IDLE_T and
---          r.recvdQueCnt /= 0 and
           resize(r.wrIndex + 16,BIS) /= r.rdIndex) then  -- prevent overwrite
         v.wrIndex                  := r.wrIndex + 1;
-        v.recvdQueCnt              := v.recvdQueCnt - 1;
         v.wrTag(itag)              := REQUESTED_T;
         v.wrDescAck.valid          := '1';
         v.wid                      := resize(wrDescReq.id,8);
@@ -388,8 +268,6 @@ begin
       else
         v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+0) & stag;
       end if;
---      v.wrTransferAddr := wrDescRet.buffId(BIS-1 downto 0);
-      v.wrDescRetId := stag;
     end if;
     
     itag := conv_integer(r.wcIndex(3 downto 0));
@@ -398,15 +276,6 @@ begin
       v.wcIndex     := r.wcIndex + 1;
     end if;
 
-    itag := conv_integer(wrTagIndexS);
-    if r.wrTag(itag) = IDLE_T then
-      v.wrTagWc := "00";
-    elsif r.wrTag(itag) = REQUESTED_T then
-      v.wrTagWc := "01";
-    else
-      v.wrTagWc := "10";
-    end if;
-      
     if rdDescReqAck='1' then
       v.rdDescReq.valid := '0';
     end if;
@@ -443,14 +312,14 @@ begin
     
     if (rdDescRet.valid = '1' and r.rdDescRetAck = '0') then
       v.rdDescRetAck := '1';
-      v.writeQueCnt := v.writeQueCnt + 1;
+      v.writeQueCnt  := v.writeQueCnt + 1;
     end if;
 
     v.blocksFree              := resize(r.rdIndex - r.wcIndex - 1, BIS);
 
     status.blocksFree         <= r.blocksFree;
     status.blocksQueued       <= resize(r.wrIndex - r.rdIndex, BIS);
-    status.writeQueCnt        <= r.recvdQueCnt;  -- something going on here
+    status.writeQueCnt        <= r.writeQueCnt;
     status.wrIndex            <= r.wrIndex;
     status.wcIndex            <= r.wcIndex;
     status.rdIndex            <= r.rdIndex;
@@ -460,15 +329,9 @@ begin
     status.rid                <= r.rid;
     status.rdest              <= r.rdest;
 
-    status.wrTagWc            <= r.wrTagWc;
-    status.wrDescRetId        <= r.wrDescRetId;
-    status.wrTransAddr        <= resize(r.wrTransferAddr,16);
-    
     wrDescAck                 <= r.wrDescAck;
---    wrDescRetAck              <= v.wrDescRetAck;
     wrDescRetAck              <= r.wrDescRetAck;
     rdDescReq                 <= r.rdDescReq;
---    rdDescRetAck              <= v.rdDescRetAck;
     rdDescRetAck              <= r.rdDescRetAck;
 
     rdenb          <= v.rdenb;
