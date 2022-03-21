@@ -119,7 +119,61 @@ class MigLane(pr.Device):
             bitSize      = 9,
             mode         = 'RO',
         ))
+
+class MigLaneDetail(pr.Device):
+    def __init__(self,
+                 name         = "MigLaneDetail",
+                 description  = "RAM Controller",
+                 **kwargs) :
+        super().__init__(name=name, description=description, **kwargs)
+
+        self.add(pr.RemoteVariable(
+            name         = 'wid',
+            offset       = 0x000,
+            bitSize      = 8,
+            mode         = 'RO',
+        ))
         
+        self.add(pr.RemoteVariable(
+            name         = 'rid',
+            offset       = 0x000,
+            bitSize      = 8,
+            bitOffset    = 8,
+            mode         = 'RO',
+        ))
+        
+        self.add(pr.RemoteVariable(
+            name         = 'vid',
+            offset       = 0x000,
+            bitSize      = 8,
+            bitOffset    = 16,
+            mode         = 'RO',
+        ))
+        
+        self.add(pr.RemoteVariable(
+            name         = 'wdest',
+            offset       = 0x004,
+            bitSize      = 8,
+            mode         = 'RO',
+        ))
+        
+        self.add(pr.RemoteVariable(
+            name         = 'rdest',
+            offset       = 0x004,
+            bitSize      = 8,
+            bitOffset    = 8,
+            mode         = 'RO',
+        ))
+        
+        self.add(pr.RemoteVariable(
+            name         = 'vdest',
+            offset       = 0x004,
+            bitSize      = 8,
+            bitOffset    = 16,
+            mode         = 'RO',
+        ))
+
+
 class MigToPcie(pr.Device):
     def __init__( self,
                   name        = "MigToPcie",
@@ -135,40 +189,54 @@ class MigToPcie(pr.Device):
             mode         = 'RW',
         ))
 
+        self.add(pr.RemoteVariable(
+            name         = 'usrRst',
+            offset       = 0x000,
+            bitSize      = 1,
+            bitOffset    = 1,
+            mode         = 'RW',
+        ))
+
         for i in range(numLanes):
             self.add(MigLane(
                 name   = ('MigLane[%i]' % i),
-                offset = (i*0x080),
+                offset = (0x080+i*0x20),
                 expand = True,
             ))
 
-        self.add(pr.RemoteVariable(
-            name         = 'monEnable',
-            offset       = 0x000,
-            bitSize      = 1,
-            mode         = 'RW',
-        ))
+        for i in range(numLanes):
+            self.add(MigLaneDetail(
+                name   = ('MigLaneDetail[%i]' % i),
+                offset = (0x180+i*0x20),
+                expand = True,
+            ))
 
         #  MonClk
         for i in range(4):
             self.add(pr.RemoteVariable(
                 name         = f'MonClock{i}Raw',
-                offset       = (0x750-devOffset),
-                bitSize      = 32,
+                offset       = (0x100+i*4),
+                bitSize      = 29,
                 mode         = 'RO',
                 hidden       = True,
                 pollInterval = 1,
             ))
 
+        def addMonClk(name,raw):
             self.add(pr.LinkVariable(
-                name         = f'MonClock{i}Frequency',
+                name         = name,
                 units        = "MHz",
                 mode         = 'RO',
-                dependencies = [getattr(self,f'MonClk{i}Raw')],
-                linkedGet    = lambda: getattr(self,f'MonClk{i}Raw').value() * 1.0e-6,
+                dependencies = [raw],
+                linkedGet    = lambda: raw.value() * 1.0e-6,
                 disp         = '{:0.3f}',
             ))
-        
+
+        addMonClk('MonClock0Frequency',self.MonClock0Raw)
+        addMonClk('MonClock1Frequency',self.MonClock1Raw)
+        addMonClk('MonClock2Frequency',self.MonClock2Raw)
+        addMonClk('MonClock3Frequency',self.MonClock3Raw)
+
 class Application(pr.Device):
     def __init__(   self,
                     name        = "Application",
