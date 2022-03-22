@@ -29,12 +29,12 @@ library axi_pcie_core;
 library unisim;
 use unisim.vcomponents.all;
 
-entity Lcls2ClinkC1100Pgp4_10Gbps is
+entity Lcls2XilinxC1100Pgp4_6Gbps is
    generic (
       TPD_G          : time    := 1 ns;
       ROGUE_SIM_EN_G : boolean := false;
       PGP_TYPE_G     : string  := "PGP4";
-      RATE_G         : string  := "10.3125Gbps";
+      RATE_G         : string  := "6.25Gbps";
       BUILD_INFO_G   : BuildInfoType);
    port (
       ---------------------
@@ -79,9 +79,9 @@ entity Lcls2ClinkC1100Pgp4_10Gbps is
       pciRxN       : in    slv(15 downto 0);
       pciTxP       : out   slv(15 downto 0);
       pciTxN       : out   slv(15 downto 0));
-end Lcls2ClinkC1100Pgp4_10Gbps;
+end Lcls2XilinxC1100Pgp4_6Gbps;
 
-architecture top_level of Lcls2ClinkC1100Pgp4_10Gbps is
+architecture top_level of Lcls2XilinxC1100Pgp4_6Gbps is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 64-bit interface
    constant AXIL_CLK_FREQ_C   : real                := 156.25E+6;  -- units of Hz
