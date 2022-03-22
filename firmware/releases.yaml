@@ -45,6 +45,19 @@ Targets:
     ImageDir: targets/XilinxKcu1500/Lcls2XilinxKcu1500Pgp4_10Gbps/images
     Extensions:
       - mcs
+################################################################################
+  # Lcls2XilinxC1100Pgp2b:
+    # ImageDir: targets/XilinxC1100/Lcls2XilinxC1100Pgp2b/images
+    # Extensions:
+      # - mcs
+  Lcls2XilinxC1100Pgp4_6Gbps:
+    ImageDir: targets/XilinxC1100/Lcls2XilinxC1100Pgp4_6Gbps/images
+    Extensions:
+      - mcs
+  Lcls2XilinxC1100Pgp4_10Gbps:
+    ImageDir: targets/XilinxC1100/Lcls2XilinxC1100Pgp4_10Gbps/images
+    Extensions:
+      - mcs
 ################################################################################        
 Releases:
   all:
@@ -58,6 +71,10 @@ Releases:
       - Lcls2XilinxKcu1500Pgp2b
       - Lcls2XilinxKcu1500Pgp4_6Gbps
       - Lcls2XilinxKcu1500Pgp4_10Gbps
+      #######################################
+      # - Lcls2XilinxC1100Pgp2b
+      - Lcls2XilinxC1100Pgp4_6Gbps
+      - Lcls2XilinxC1100Pgp4_10Gbps
       #######################################
     Types:
       - Rogue
