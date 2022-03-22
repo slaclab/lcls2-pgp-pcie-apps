@@ -11,7 +11,6 @@
 import pyrogue as pr
 
 import axipcie                 as pcie
-import lcls2_pgp_pcie_apps     as dev
 import lcls2_pgp_fw_lib.shared as shared
 
 class PcieFpga(pr.Device):
@@ -30,7 +29,7 @@ class PcieFpga(pr.Device):
         ))
 
         # Application layer
-        self.add(dev.Application(
+        self.add(shared.Application(
             offset   = 0x00C0_0000,
             numLanes = 4,
             expand   = True,

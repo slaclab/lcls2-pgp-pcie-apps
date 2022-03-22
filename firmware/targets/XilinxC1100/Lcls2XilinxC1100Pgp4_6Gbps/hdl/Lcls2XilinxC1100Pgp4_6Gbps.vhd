@@ -1,8 +1,7 @@
 -------------------------------------------------------------------------------
--- File       : Lcls2XilinxKcu1500Pgp2b.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
--- Description: Camera link gateway PCIe card with PGPv2b
+-- Description: Camera link gateway PCIe card with PGPv4
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
 -- It is subject to the license terms in the LICENSE.txt file found in the
@@ -30,68 +29,59 @@ library axi_pcie_core;
 library unisim;
 use unisim.vcomponents.all;
 
-entity Lcls2XilinxKcu1500Pgp2b is
+entity Lcls2XilinxC1100Pgp4_6Gbps is
    generic (
       TPD_G          : time    := 1 ns;
       ROGUE_SIM_EN_G : boolean := false;
-      PGP_TYPE_G     : string  := "PGP2b";
-      RATE_G         : string  := "3.125Gbps";
+      PGP_TYPE_G     : string  := "PGP4";
+      RATE_G         : string  := "6.25Gbps";
       BUILD_INFO_G   : BuildInfoType);
    port (
       ---------------------
       --  Application Ports
       ---------------------
       -- QSFP[0] Ports
-      qsfp0RefClkP : in    slv(1 downto 0);
-      qsfp0RefClkN : in    slv(1 downto 0);
+      qsfp0RefClkP : in    sl;
+      qsfp0RefClkN : in    sl;
       qsfp0RxP     : in    slv(3 downto 0);
       qsfp0RxN     : in    slv(3 downto 0);
       qsfp0TxP     : out   slv(3 downto 0);
       qsfp0TxN     : out   slv(3 downto 0);
       -- QSFP[1] Ports
-      qsfp1RefClkP : in    slv(1 downto 0);
-      qsfp1RefClkN : in    slv(1 downto 0);
+      qsfp1RefClkP : in    sl;
+      qsfp1RefClkN : in    sl;
       qsfp1RxP     : in    slv(3 downto 0);
       qsfp1RxN     : in    slv(3 downto 0);
       qsfp1TxP     : out   slv(3 downto 0);
       qsfp1TxN     : out   slv(3 downto 0);
+      -- HBM Ports
+      hbmCatTrip   : out   sl := '0';  -- HBM Catastrophic Over temperature Output signal to Satellite Controller: active HIGH indicator to Satellite controller to indicate the HBM has exceeds its maximum allowable temperature
       --------------
       --  Core Ports
       --------------
       -- System Ports
-      emcClk       : in    sl;
       userClkP     : in    sl;
       userClkN     : in    sl;
-      i2cRstL      : out   sl;
-      i2cScl       : inout sl;
-      i2cSda       : inout sl;
-      -- QSFP[0] Ports
-      qsfp0RstL    : out   sl;
-      qsfp0LpMode  : out   sl;
-      qsfp0ModSelL : out   sl;
-      qsfp0ModPrsL : in    sl;
-      -- QSFP[1] Ports
-      qsfp1RstL    : out   sl;
-      qsfp1LpMode  : out   sl;
-      qsfp1ModSelL : out   sl;
-      qsfp1ModPrsL : in    sl;
-      -- Boot Memory Ports
-      flashCsL     : out   sl;
-      flashMosi    : out   sl;
-      flashMiso    : in    sl;
-      flashHoldL   : out   sl;
-      flashWp      : out   sl;
+      hbmRefClkP   : in    sl;
+      hbmRefClkN   : in    sl;
+      -- SI5394 Ports
+      si5394Scl    : inout sl;
+      si5394Sda    : inout sl;
+      si5394IrqL   : in    sl;
+      si5394LolL   : in    sl;
+      si5394LosL   : in    sl;
+      si5394RstL   : out   sl;
       -- PCIe Ports
       pciRstL      : in    sl;
-      pciRefClkP   : in    sl;
-      pciRefClkN   : in    sl;
-      pciRxP       : in    slv(7 downto 0);
-      pciRxN       : in    slv(7 downto 0);
-      pciTxP       : out   slv(7 downto 0);
-      pciTxN       : out   slv(7 downto 0));
-end Lcls2XilinxKcu1500Pgp2b;
+      pciRefClkP   : in    slv(1 downto 0);
+      pciRefClkN   : in    slv(1 downto 0);
+      pciRxP       : in    slv(15 downto 0);
+      pciRxN       : in    slv(15 downto 0);
+      pciTxP       : out   slv(15 downto 0);
+      pciTxN       : out   slv(15 downto 0));
+end Lcls2XilinxC1100Pgp4_6Gbps;
 
-architecture top_level of Lcls2XilinxKcu1500Pgp2b is
+architecture top_level of Lcls2XilinxC1100Pgp4_6Gbps is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 64-bit interface
    constant AXIL_CLK_FREQ_C   : real                := 156.25E+6;  -- units of Hz
@@ -104,7 +94,8 @@ architecture top_level of Lcls2XilinxKcu1500Pgp2b is
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, x"0080_0000", 23, 22);
 
-   signal userClk156 : sl;
+   signal userClk    : sl;
+   signal userClkBuf : sl;
    signal userClk25  : sl;
    signal userRst25  : sl;
 
@@ -140,39 +131,67 @@ architecture top_level of Lcls2XilinxKcu1500Pgp2b is
 
 begin
 
-   ---------------------------------------
-   -- AXI-Lite and reference 25 MHz clocks
-   ---------------------------------------
+   U_BUFG : BUFG
+      port map (
+         I => userClk,
+         O => userClkBuf);
+
+   ---------------------------
+   -- AXI-Lite clock and Reset
+   ---------------------------
    U_axilClk : entity surf.ClockManagerUltraScale
+      generic map(
+         TPD_G              => TPD_G,
+         SIMULATION_G       => ROGUE_SIM_EN_G,
+         TYPE_G             => "MMCM",
+         INPUT_BUFG_G       => false,
+         FB_BUFG_G          => true,
+         RST_IN_POLARITY_G  => '1',
+         NUM_CLOCKS_G       => 1,
+         -- MMCM attributes
+         BANDWIDTH_G        => "OPTIMIZED",
+         CLKIN_PERIOD_G     => 10.0,    -- 100MHz
+         DIVCLK_DIVIDE_G    => 8,       -- 12.5MHz = 100MHz/8
+         CLKFBOUT_MULT_F_G  => 96.875,  -- 1210.9375MHz = 96.875 x 12.5MHz
+         CLKOUT0_DIVIDE_F_G => 7.75)    -- 156.25MHz = 1210.9375MHz/7.75
+      port map(
+         -- Clock Input
+         clkIn     => userClkBuf,
+         rstIn     => dmaRst,
+         -- Clock Outputs
+         clkOut(0) => axilClk,
+         -- Reset Outputs
+         rstOut(0) => axilRst);
+
+   -----------------------------------
+   -- Reference 25 MHz clock and Reset
+   -----------------------------------
+   U_userClk25 : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G             => TPD_G,
          SIMULATION_G      => ROGUE_SIM_EN_G,
          TYPE_G            => "PLL",
-         INPUT_BUFG_G      => true,
+         INPUT_BUFG_G      => false,
          FB_BUFG_G         => true,
          RST_IN_POLARITY_G => '1',
-         NUM_CLOCKS_G      => 2,
+         NUM_CLOCKS_G      => 1,
          -- MMCM attributes
-         CLKIN_PERIOD_G    => 6.4,      -- 156.25 MHz
-         CLKFBOUT_MULT_G   => 8,        -- 1.25GHz = 8 x 156.25 MHz
-         CLKOUT0_DIVIDE_G  => 8,        -- 156.25MHz = 1.25GHz/8
-         CLKOUT1_DIVIDE_G  => 50)       -- 25MHz = 1.25GHz/50
-
+         CLKIN_PERIOD_G    => 10.0,       -- 100 MHz
+         CLKFBOUT_MULT_G   => 10,       -- 1GHz = 10 x 100 MHz
+         CLKOUT0_DIVIDE_G  => 40)       -- 25MHz = 1GHz/40
       port map(
          -- Clock Input
-         clkIn     => userClk156,
+         clkIn     => userClkBuf,
          rstIn     => dmaRst,
          -- Clock Outputs
-         clkOut(0) => axilClk,
-         clkOut(1) => userClk25,
+         clkOut(0) => userClk25,
          -- Reset Outputs
-         rstOut(0) => axilRst,
-         rstOut(1) => userRst25);
+         rstOut(0) => userRst25);
 
    -----------------------
    -- AXI-PCIE-CORE Module
    -----------------------
-   U_Core : entity axi_pcie_core.XilinxKcu1500Core
+   U_Core : entity axi_pcie_core.XilinxVariumC1100Core
       generic map (
          TPD_G                => TPD_G,
          ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -184,7 +203,7 @@ begin
          ------------------------
          --  Top Level Interfaces
          ------------------------
-         userClk156     => userClk156,
+         userClk        => userClk,
          -- DMA Interfaces
          dmaClk         => dmaClk,
          dmaRst         => dmaRst,
@@ -203,28 +222,17 @@ begin
          --  Core Ports
          --------------
          -- System Ports
-         emcClk         => emcClk,
          userClkP       => userClkP,
          userClkN       => userClkN,
-         i2cRstL        => i2cRstL,
-         i2cScl         => i2cScl,
-         i2cSda         => i2cSda,
-         -- QSFP[0] Ports
-         qsfp0RstL      => qsfp0RstL,
-         qsfp0LpMode    => qsfp0LpMode,
-         qsfp0ModSelL   => qsfp0ModSelL,
-         qsfp0ModPrsL   => qsfp0ModPrsL,
-         -- QSFP[1] Ports
-         qsfp1RstL      => qsfp1RstL,
-         qsfp1LpMode    => qsfp1LpMode,
-         qsfp1ModSelL   => qsfp1ModSelL,
-         qsfp1ModPrsL   => qsfp1ModPrsL,
-         -- Boot Memory Ports
-         flashCsL       => flashCsL,
-         flashMosi      => flashMosi,
-         flashMiso      => flashMiso,
-         flashHoldL     => flashHoldL,
-         flashWp        => flashWp,
+         hbmRefClkP     => hbmRefClkP,
+         hbmRefClkN     => hbmRefClkN,
+         -- SI5394 Ports
+         si5394Scl      => si5394Scl,
+         si5394Sda      => si5394Sda,
+         si5394IrqL     => si5394IrqL,
+         si5394LolL     => si5394LolL,
+         si5394LosL     => si5394LosL,
+         si5394RstL     => si5394RstL,
          -- PCIe Ports
          pciRstL        => pciRstL,
          pciRefClkP     => pciRefClkP,
@@ -291,7 +299,7 @@ begin
    ------------------
    -- Hardware Module
    ------------------
-   U_HSIO : entity lcls2_pgp_fw_lib.Kcu1500Hsio
+   U_HSIO : entity lcls2_pgp_fw_lib.C1100Hsio
       generic map (
          TPD_G               => TPD_G,
          ROGUE_SIM_EN_G      => ROGUE_SIM_EN_G,
@@ -307,7 +315,7 @@ begin
          --  Top Level Interfaces
          ------------------------
          -- Reference Clock and Reset
-         userClk156            => userClk156,
+         userClk156            => axilClk,
          userClk25             => userClk25,
          userRst25             => userRst25,
          -- AXI-Lite Interface (axilClk domain)
@@ -336,7 +344,7 @@ begin
          ------------------
          --  Hardware Ports
          ------------------
-         -- QSFP[0] Ports,
+         -- QSFP[0] Ports
          qsfp0RefClkP          => qsfp0RefClkP,
          qsfp0RefClkN          => qsfp0RefClkN,
          qsfp0RxP              => qsfp0RxP,
