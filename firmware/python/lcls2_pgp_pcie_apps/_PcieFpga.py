@@ -13,6 +13,7 @@ import pyrogue as pr
 import axipcie                 as pcie
 import lcls2_pgp_pcie_apps     as dev
 import lcls2_pgp_fw_lib.shared as shared
+import daq_stream_cache        as daq
 
 class PcieFpga(pr.Device):
     def __init__(self,
@@ -30,11 +31,18 @@ class PcieFpga(pr.Device):
             expand      = False,
         ))
 
+        if useDdr:
+            self.add(daq.StreamCache(
+                name     = 'StreamCache',
+                numLanes = 4,
+                offset   = 0x0010_0000,
+                expand   = False,
+            ))
+
         # Application layer
         self.add(dev.Application(
             offset   = 0x00C0_0000,
             numLanes = 4,
-            useDdr   = useDdr,
             expand   = True,
         ))
 

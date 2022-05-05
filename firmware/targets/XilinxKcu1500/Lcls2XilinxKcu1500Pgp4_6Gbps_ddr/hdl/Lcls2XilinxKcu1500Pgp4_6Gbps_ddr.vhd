@@ -22,12 +22,15 @@ use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
+use surf.Pgp4Pkg.all;
 
 library lcls2_pgp_fw_lib;
 
 library axi_pcie_core;
 use axi_pcie_core.AxiPciePkg.all;
 use axi_pcie_core.MigPkg.all;
+
+library daq_stream_cache;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -105,12 +108,22 @@ architecture top_level of Lcls2XilinxKcu1500Pgp4_6Gbps_ddr is
    constant NUM_LANES_C       : positive            := 4;
    constant DMA_SIZE_C        : positive            := NUM_LANES_C+1;
 
-   constant NUM_AXIL_MASTERS_C : positive := 2;
+   constant NUM_AXIL_MASTERS_C : positive := 3;
 
    constant HW_INDEX_C  : natural := 0;
    constant APP_INDEX_C : natural := 1;
+   constant CA_INDEX_C  : natural := 2;
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, x"0080_0000", 23, 22);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
+     HW_INDEX_C  => ( baseAddr     => x"0080_0000",
+                      addrBits     => 22,
+                      connectivity => x"FFFF" ),
+     APP_INDEX_C => ( baseAddr     => x"00C0_0000",
+                      addrBits     => 22,
+                      connectivity => x"FFFF" ),
+     CA_INDEX_C  => ( baseAddr     => x"0010_0000",
+                      addrBits     => 20,
+                      connectivity => x"FFFF" ) );
 
    signal userClk156 : sl;
    signal userClk25  : sl;
@@ -139,6 +152,13 @@ architecture top_level of Lcls2XilinxKcu1500Pgp4_6Gbps_ddr is
    signal pgpObMasters : AxiStreamQuadMasterArray(NUM_LANES_C-1 downto 0) := (others => (others => AXI_STREAM_MASTER_INIT_C));
    signal pgpObSlaves  : AxiStreamQuadSlaveArray(NUM_LANES_C-1 downto 0)  := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
 
+   signal axisClkV      : slv(NUM_LANES_C-1 downto 0);
+   signal axisRstV      : slv(NUM_LANES_C-1 downto 0);
+   signal axisIbMasters : AxiStreamMasterArray(NUM_LANES_C-1 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
+   signal axisIbSlaves  : AxiStreamSlaveArray(NUM_LANES_C-1 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal axisObMasters : AxiStreamMasterArray(NUM_LANES_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal axisObSlaves  : AxiStreamSlaveArray(NUM_LANES_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+
    signal eventTrigMsgMasters : AxiStreamMasterArray(NUM_LANES_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal eventTrigMsgSlaves  : AxiStreamSlaveArray(NUM_LANES_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
    signal eventTrigMsgCtrl    : AxiStreamCtrlArray(NUM_LANES_C-1 downto 0)   := (others => AXI_STREAM_CTRL_UNUSED_C);
@@ -161,26 +181,23 @@ begin
          INPUT_BUFG_G      => true,
          FB_BUFG_G         => false,
          RST_IN_POLARITY_G => '1',
-         NUM_CLOCKS_G      => 3,
+         NUM_CLOCKS_G      => 2,
          -- MMCM attributes
          CLKIN_PERIOD_G     => 6.4,      -- 156.25 MHz
          CLKFBOUT_MULT_G    => 8,        -- 1.25GHz = 8 x 156.25 MHz
-         CLKOUT0_DIVIDE_F_G => 6.25,     -- 200 MHz
-         CLKOUT1_DIVIDE_G   => 8,        -- 156.25MHz = 1.25GHz/8
-         CLKOUT2_DIVIDE_G   => 50)       -- 25MHz = 1.25GHz/50
+         CLKOUT0_DIVIDE_F_G => 8.0,      -- 156.25MHz = 1.25GHz/8
+         CLKOUT1_DIVIDE_G   => 50)       -- 25MHz = 1.25GHz/50
 
       port map(
          -- Clock Input
          clkIn     => userClk156,
          rstIn     => dmaRst,
          -- Clock Outputs
-         clkOut(0) => clk200,
-         clkOut(1) => axilClk,
-         clkOut(2) => userClk25,
+         clkOut(0) => axilClk,
+         clkOut(1) => userClk25,
          -- Reset Outputs
-         rstOut(0) => rst200,
-         rstOut(1) => axilRst,
-         rstOut(2) => userRst25);
+         rstOut(0) => axilRst,
+         rstOut(1) => userRst25);
 
    -----------------------
    -- AXI-PCIE-CORE Module
@@ -268,12 +285,12 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   U_App : entity work.DdrApplication
+   U_App : entity work.Application
       generic map (
          TPD_G             => TPD_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(APP_INDEX_C).baseAddr,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         NUM_LANES_G       => NUM_LANES_C)
+         DMA_SIZE_G        => NUM_LANES_C)
       port map (
          -- AXI-Lite Interface (axilClk domain)
          axilClk               => axilClk,
@@ -290,9 +307,42 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventTrigMsgMasters   => eventTrigMsgMasters,
          eventTrigMsgSlaves    => eventTrigMsgSlaves,
-         eventTrigMsgCtrl      => eventTrigMsgCtrl,
          eventTimingMsgMasters => eventTimingMsgMasters,
          eventTimingMsgSlaves  => eventTimingMsgSlaves,
+         -- DMA Interface (axilClk domain)
+         dmaClk                => axilClk,
+         dmaRst                => axilRst,
+         dmaObMasters          => axisObMasters,
+         dmaObSlaves           => axisObSlaves,
+         dmaIbMasters          => axisIbMasters,
+         dmaIbSlaves           => axisIbSlaves );
+
+   axisClkV <= (others=>axilClk);
+   axisRstV <= (others=>axilRst);
+   
+   U_Cache : entity daq_stream_cache.StreamCache
+     generic map (
+       TPD_G             => TPD_G,
+       AXI_BASE_ADDR_G   => AXIL_CONFIG_C(CA_INDEX_C).baseAddr,
+       APP_AXIS_CONFIG_G => PGP4_AXIS_CONFIG_C,
+       DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
+       NUM_LANES_G       => NUM_LANES_C )
+     port map (
+         axilClk               => axilClk,
+         axilRst               => axilRst,
+         axilReadMaster        => axilReadMasters(CA_INDEX_C),
+         axilReadSlave         => axilReadSlaves(CA_INDEX_C),
+         axilWriteMaster       => axilWriteMasters(CA_INDEX_C),
+         axilWriteSlave        => axilWriteSlaves(CA_INDEX_C),
+         -- Trigger Event streams (axilClk domain)
+         eventTrigMsgCtrl      => eventTrigMsgCtrl,
+         -- PGP Streams (axilClk domain)
+         appClk                => axisClkV,
+         appRst                => axisRstV,
+         appIbMasters          => axisIbMasters,
+         appIbSlaves           => axisIbSlaves,
+         appObMasters          => axisObMasters,
+         appObSlaves           => axisObSlaves,
          -- DMA Interface (dmaClk domain)
          dmaClk                => dmaClk,
          dmaRst                => dmaRst,
@@ -301,13 +351,12 @@ begin
          dmaIbMasters          => dmaIbMasters,
          dmaIbSlaves           => dmaIbSlaves,
          -- DDR Ports
-         clk200                => clk200,
-         rst200                => rst200,
          ddrClkP               => ddrClkP,
          ddrClkN               => ddrClkN,
          ddrOut                => ddrOut,
-         ddrInOut              => ddrInOut );
-
+         ddrInOut              => ddrInOut
+       );
+   
    ------------------
    -- Hardware Module
    ------------------
