@@ -255,7 +255,7 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   U_App : entity work.Application
+   U_App : entity lcls2_pgp_fw_lib.Application
       generic map (
          TPD_G             => TPD_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(APP_INDEX_C).baseAddr,
@@ -277,6 +277,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventTrigMsgMasters   => eventTrigMsgMasters,
          eventTrigMsgSlaves    => eventTrigMsgSlaves,
+         eventTrigMsgCtrl      => eventTrigMsgCtrl,
          eventTimingMsgMasters => eventTimingMsgMasters,
          eventTimingMsgSlaves  => eventTimingMsgSlaves,
          -- DMA Interface (dmaClk domain)
@@ -306,6 +307,7 @@ begin
          --  Top Level Interfaces
          ------------------------
          -- Reference Clock and Reset
+         userClk156            => userClk156,
          userClk25             => userClk25,
          userRst25             => userRst25,
          -- AXI-Lite Interface (axilClk domain)
