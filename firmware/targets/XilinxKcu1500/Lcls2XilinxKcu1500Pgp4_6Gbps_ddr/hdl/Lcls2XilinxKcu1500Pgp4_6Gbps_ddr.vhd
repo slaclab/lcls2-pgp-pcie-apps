@@ -307,7 +307,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventTrigMsgMasters   => eventTrigMsgMasters,
          eventTrigMsgSlaves    => eventTrigMsgSlaves,
-         eventTrigMsgCtrl      => eventTrigMsgCtrl,
+         -- eventTrigMsgCtrl      => eventTrigMsgCtrl, -- Using daq_stream_cache.StreamCache for flow control
          eventTimingMsgMasters => eventTimingMsgMasters,
          eventTimingMsgSlaves  => eventTimingMsgSlaves,
          -- DMA Interface (axilClk domain)
