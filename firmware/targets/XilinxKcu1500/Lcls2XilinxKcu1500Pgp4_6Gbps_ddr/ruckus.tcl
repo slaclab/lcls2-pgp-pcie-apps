@@ -13,9 +13,6 @@ loadRuckusTcl $::env(TOP_DIR)/submodules/daq-stream-cache
 loadSource -lib l2si_core -dir "$::env(TOP_DIR)/submodules/l2si-core/xpm/rtl"
 loadSource -lib l2si_core -dir "$::env(TOP_DIR)/submodules/l2si-core/base/rtl"
 
-# Load common source code
-loadRuckusTcl $::env(TOP_DIR)/common
-
 # Load local source Code
 loadSource -dir "$::DIR_PATH/hdl"
 loadConstraints -dir "$::DIR_PATH/hdl"
