@@ -36,10 +36,11 @@ class DevRoot(shared.Root):
                  dataVc         = 1,
                  pollEn         = True,  # Enable automatic polling registers
                  initRead       = True,  # Read all registers at start of the system
+                 useDdr         = False,
                  **kwargs):
 
         # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x02020000
+        self.FwVersionLock = 0x02030000
 
         # Set local variables
         self.startupMode    = startupMode
@@ -78,6 +79,7 @@ class DevRoot(shared.Root):
             pgp4     = pgp4,
             enLclsI  = enLclsI,
             enLclsII = enLclsII,
+            useDdr   = useDdr,
             expand   = True,
         ))
 

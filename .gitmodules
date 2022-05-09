@@ -16,3 +16,6 @@
 [submodule "firmware/submodules/lcls2-pgp-fw-lib"]
 	path = firmware/submodules/lcls2-pgp-fw-lib
 	url = git@github.com:slaclab/lcls2-pgp-fw-lib
+[submodule "firmware/submodules/daq-stream-cache"]
+	path = firmware/submodules/daq-stream-cache
+	url = git@github.com:slaclab/daq-stream-cache
