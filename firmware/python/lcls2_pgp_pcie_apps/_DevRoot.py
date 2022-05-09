@@ -191,9 +191,9 @@ class DevRoot(shared.Root):
                     self.LoadConfig(yamlFile)
 
             # Set the VC data tap
-            vcDataTap = self.find(typ=pcieApp.VcDataTap)
-            for devPtr in vcDataTap:
-                devPtr.Tap.set(self.dataVc)
+            appLane = self.find(typ=shared.AppLane)
+            for devPtr in appLane:
+                devPtr.VcDataTap.set(self.dataVc)
 
     # Function calls after loading YAML configuration
     def initialize(self):
