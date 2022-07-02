@@ -311,7 +311,7 @@ begin
          TPD_G             => TPD_G,
          DMA_SIZE_G        => DMA_SIZE_C,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         AXIL_BASE_ADDR_G  => AXIL_XBAR_CONFIG_C(BUFF_INDEX_C).baseAddr)
+         AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(BUFF_INDEX_C).baseAddr)
       port map (
          -- AXI-Lite Interface (axilClk domain)
          axilClk          => axilClk,

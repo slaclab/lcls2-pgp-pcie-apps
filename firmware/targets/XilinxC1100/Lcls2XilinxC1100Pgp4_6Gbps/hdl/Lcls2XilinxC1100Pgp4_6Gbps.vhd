@@ -106,6 +106,7 @@ architecture top_level of Lcls2XilinxC1100Pgp4_6Gbps is
          addrBits     => 22,
          connectivity => x"FFFF"));
 
+   signal hbmRefClk  : sl;
    signal userClk    : sl;
    signal userClkBuf : sl;
    signal userClk25  : sl;
@@ -130,9 +131,6 @@ architecture top_level of Lcls2XilinxC1100Pgp4_6Gbps is
    signal dmaIbSlaves   : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
    signal buffIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal buffIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
-
-   signal hbmRefClk : sl;
-   signal userClk   : sl;
 
    signal pgpIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
    signal pgpIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -286,7 +284,7 @@ begin
          TPD_G             => TPD_G,
          DMA_SIZE_G        => DMA_SIZE_C,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         AXIL_BASE_ADDR_G  => AXIL_XBAR_CONFIG_C(BUFF_INDEX_C).baseAddr)
+         AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(BUFF_INDEX_C).baseAddr)
       port map (
          -- HBM Interface
          hbmRefClk        => hbmRefClk,
