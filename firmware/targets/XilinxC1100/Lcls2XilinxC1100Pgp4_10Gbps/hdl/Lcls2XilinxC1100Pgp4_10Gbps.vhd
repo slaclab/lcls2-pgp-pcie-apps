@@ -55,7 +55,7 @@ entity Lcls2XilinxC1100Pgp4_10Gbps is
       qsfp1TxP     : out   slv(3 downto 0);
       qsfp1TxN     : out   slv(3 downto 0);
       -- HBM Ports
-      hbmCatTrip   : out   sl := '0';  -- HBM Catastrophic Over temperature Output signal to Satellite Controller: active HIGH indicator to Satellite controller to indicate the HBM has exceeds its maximum allowable temperature
+      hbmCatTrip   : out   sl;  -- HBM Catastrophic Over temperature Output signal to Satellite Controller: active HIGH indicator to Satellite controller to indicate the HBM has exceeds its maximum allowable temperature
       --------------
       --  Core Ports
       --------------
@@ -87,12 +87,24 @@ architecture top_level of Lcls2XilinxC1100Pgp4_10Gbps is
    constant AXIL_CLK_FREQ_C   : real                := 156.25E+6;  -- units of Hz
    constant DMA_SIZE_C        : positive            := 4;
 
-   constant NUM_AXIL_MASTERS_C : positive := 2;
+   constant BUFF_INDEX_C       : natural  := 0;
+   constant HW_INDEX_C         : natural  := 1;
+   constant APP_INDEX_C        : natural  := 2;
+   constant NUM_AXIL_MASTERS_C : positive := 3;
 
-   constant HW_INDEX_C  : natural := 0;
-   constant APP_INDEX_C : natural := 1;
-
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, x"0080_0000", 23, 22);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
+      0               => (
+         baseAddr     => x"0010_0000",
+         addrBits     => 20,
+         connectivity => x"FFFF"),
+      1               => (
+         baseAddr     => x"0080_0000",
+         addrBits     => 22,
+         connectivity => x"FFFF"),
+      2               => (
+         baseAddr     => x"00C0_0000",
+         addrBits     => 22,
+         connectivity => x"FFFF"));
 
    signal userClk    : sl;
    signal userClkBuf : sl;
@@ -110,12 +122,17 @@ architecture top_level of Lcls2XilinxC1100Pgp4_10Gbps is
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
 
-   signal dmaClk       : sl;
-   signal dmaRst       : sl;
-   signal dmaObMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal dmaObSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
-   signal dmaIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal dmaIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal dmaClk        : sl;
+   signal dmaRst        : sl;
+   signal dmaObMasters  : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal dmaObSlaves   : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal dmaIbMasters  : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal dmaIbSlaves   : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal buffIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal buffIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+
+   signal hbmRefClk : sl;
+   signal userClk   : sl;
 
    signal pgpIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
    signal pgpIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -176,7 +193,7 @@ begin
          RST_IN_POLARITY_G => '1',
          NUM_CLOCKS_G      => 1,
          -- MMCM attributes
-         CLKIN_PERIOD_G    => 10.0,       -- 100 MHz
+         CLKIN_PERIOD_G    => 10.0,     -- 100 MHz
          CLKFBOUT_MULT_G   => 10,       -- 1GHz = 10 x 100 MHz
          CLKOUT0_DIVIDE_G  => 40)       -- 25MHz = 1GHz/40
       port map(
@@ -263,6 +280,34 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
+   U_HbmDmaBuffer : entity axi_pcie_core.HbmDmaBuffer
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_SIZE_G        => DMA_SIZE_C,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
+         AXIL_BASE_ADDR_G  => AXIL_XBAR_CONFIG_C(BUFF_INDEX_C).baseAddr)
+      port map (
+         -- HBM Interface
+         hbmRefClk        => hbmRefClk,
+         hbmCatTrip       => hbmCatTrip,
+         -- AXI-Lite Interface (axilClk domain)
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         axilReadMaster   => axilReadMasters(BUFF_INDEX_C),
+         axilReadSlave    => axilReadSlaves(BUFF_INDEX_C),
+         axilWriteMaster  => axilWriteMasters(BUFF_INDEX_C),
+         axilWriteSlave   => axilWriteSlaves(BUFF_INDEX_C),
+         -- Trigger Event streams (eventClk domain)
+         eventClk         => axilClk,
+         eventTrigMsgCtrl => eventTrigMsgCtrl,
+         -- AXI Stream Interface (axisClk domain)
+         axisClk          => dmaClk,
+         axisRst          => dmaRst,
+         sAxisMasters     => buffIbMasters,
+         sAxisSlaves      => buffIbSlaves,
+         mAxisMasters     => dmaIbMasters,
+         mAxisSlaves      => dmaIbSlaves);
+
    U_App : entity lcls2_pgp_fw_lib.Application
       generic map (
          TPD_G             => TPD_G,
@@ -285,7 +330,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventTrigMsgMasters   => eventTrigMsgMasters,
          eventTrigMsgSlaves    => eventTrigMsgSlaves,
-         eventTrigMsgCtrl      => eventTrigMsgCtrl,
+         eventTrigMsgCtrl      => open,
          eventTimingMsgMasters => eventTimingMsgMasters,
          eventTimingMsgSlaves  => eventTimingMsgSlaves,
          -- DMA Interface (dmaClk domain)
@@ -293,8 +338,8 @@ begin
          dmaRst                => dmaRst,
          dmaObMasters          => dmaObMasters,
          dmaObSlaves           => dmaObSlaves,
-         dmaIbMasters          => dmaIbMasters,
-         dmaIbSlaves           => dmaIbSlaves);
+         dmaIbMasters          => buffIbMasters,
+         dmaIbSlaves           => buffIbSlaves);
 
    ------------------
    -- Hardware Module
