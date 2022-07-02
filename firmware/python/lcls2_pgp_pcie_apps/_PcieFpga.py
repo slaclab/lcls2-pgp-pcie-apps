@@ -12,7 +12,7 @@ import pyrogue as pr
 
 import axipcie                 as pcie
 import lcls2_pgp_fw_lib.shared as shared
-import daq_stream_cache        as daq
+import surf.axi                as axi
 
 class PcieFpga(pr.Device):
     def __init__(self,
@@ -31,12 +31,12 @@ class PcieFpga(pr.Device):
         ))
 
         if useDdr:
-            self.add(daq.StreamCache(
-                name     = 'StreamCache',
-                numLanes = 4,
-                offset   = 0x0010_0000,
-                expand   = False,
-            ))
+            for i in range(4):
+                self.add(axi.AxiStreamDmaV2Fifo(
+                    name    = f'DmaBuffer[{i}]',
+                    offset  = 0x0010_0000+i*0x100,
+                    expand  = False,
+                ))
 
         # Application layer
         self.add(shared.Application(
