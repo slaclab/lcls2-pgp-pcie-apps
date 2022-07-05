@@ -61,6 +61,5 @@ setup(
         'lcls2_pgp_pcie_apps.LclsTimingCore': 'firmware/submodules/lcls-timing-core/python/LclsTimingCore',
         'lcls2_pgp_pcie_apps.lcls2_pgp_fw_lib': 'firmware/submodules/lcls2-pgp-fw-lib/python/lcls2_pgp_fw_lib',
         'lcls2_pgp_pcie_apps.l2si_core': 'firmware/submodules/l2si-core/python/l2si_core'
-        'lcls2_pgp_pcie_apps.daq_stream_cache': 'firmware/submodules/daq-stream-cache/python/daq_stream_cache'
     }
 )
