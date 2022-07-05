@@ -5,6 +5,7 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 loadRuckusTcl $::env(TOP_DIR)/submodules/surf
 loadRuckusTcl $::env(TOP_DIR)/submodules/lcls-timing-core
 loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500
+loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500/ddr
 loadRuckusTcl $::env(TOP_DIR)/submodules/lcls2-pgp-fw-lib/hardware/XilinxKcu1500
 
 # Load the l2si-core source code
