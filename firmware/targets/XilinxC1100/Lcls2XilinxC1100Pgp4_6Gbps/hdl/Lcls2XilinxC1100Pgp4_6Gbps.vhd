@@ -73,12 +73,12 @@ entity Lcls2XilinxC1100Pgp4_6Gbps is
       si5394RstL   : out   sl;
       -- PCIe Ports
       pciRstL      : in    sl;
-      pciRefClkP   : in    slv(1 downto 0);
-      pciRefClkN   : in    slv(1 downto 0);
-      pciRxP       : in    slv(15 downto 0);
-      pciRxN       : in    slv(15 downto 0);
-      pciTxP       : out   slv(15 downto 0);
-      pciTxN       : out   slv(15 downto 0));
+      pciRefClkP   : in    slv(0 downto 0);
+      pciRefClkN   : in    slv(0 downto 0);
+      pciRxP       : in    slv(7 downto 0);
+      pciRxN       : in    slv(7 downto 0);
+      pciTxP       : out   slv(7 downto 0);
+      pciTxN       : out   slv(7 downto 0));
 end Lcls2XilinxC1100Pgp4_6Gbps;
 
 architecture top_level of Lcls2XilinxC1100Pgp4_6Gbps is
