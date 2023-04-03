@@ -1,14 +1,13 @@
 -------------------------------------------------------------------------------
--- File       : Lcls2XilinxKcu1500Pgp4_6Gbps.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
--- Description: Camera link gateway PCIe card with PGPv2b
+-- Description: Camera link gateway PCIe card with PGPv4 at 6 Gb/s
 -------------------------------------------------------------------------------
--- This file is part of 'Camera link gateway'.
+-- This file is part of 'lcls2-pgp-pcie-apps'.
 -- It is subject to the license terms in the LICENSE.txt file found in the
 -- top-level directory of this distribution and at:
 --    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
--- No part of 'Camera link gateway', including this file,
+-- No part of 'lcls2-pgp-pcie-apps', including this file,
 -- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------

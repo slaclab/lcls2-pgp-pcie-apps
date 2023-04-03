@@ -1,8 +1,7 @@
 -------------------------------------------------------------------------------
--- File       : Lcls2SlacPgpCardG4Pgp4_6Gbps.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
--- Description: Camera link gateway PCIe card with PGPv2b
+-- Description: Camera link gateway PCIe card with PGPv4 at 6 Gb/s
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
 -- It is subject to the license terms in the LICENSE.txt file found in the
