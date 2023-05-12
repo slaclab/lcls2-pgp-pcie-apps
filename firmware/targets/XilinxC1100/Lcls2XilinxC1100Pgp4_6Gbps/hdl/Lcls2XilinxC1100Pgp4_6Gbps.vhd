@@ -359,7 +359,6 @@ begin
          --  Top Level Interfaces
          ------------------------
          -- Reference Clock and Reset
-         userClk156            => axilClk,
          userClk25             => userClk25,
          userRst25             => userRst25,
          -- AXI-Lite Interface (axilClk domain)
