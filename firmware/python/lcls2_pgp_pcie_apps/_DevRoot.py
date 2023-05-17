@@ -39,9 +39,6 @@ class DevRoot(shared.Root):
                  useDdr         = False,
                  **kwargs):
 
-        # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x03000000
-
         # Set local variables
         self.startupMode    = startupMode
         self.standAloneMode = standAloneMode
@@ -142,16 +139,6 @@ class DevRoot(shared.Root):
 
         # Check if not simulation
         if self.sim is False:
-
-            # Check for PCIe FW version
-            fwVersion = self.DevPcie.AxiPcieCore.AxiVersion.FpgaVersion.get()
-            if (fwVersion != self.FwVersionLock):
-                errMsg = f"""
-                    PCIe.AxiVersion.FpgaVersion = {fwVersion:#04x} != {self.FwVersionLock:#04x}
-                    Please update PCIe firmware using software/scripts/updatePcieFpga.py
-                    """
-                click.secho(errMsg, bg='red')
-                raise ValueError(errMsg)
 
             # Useful pointer
             timingRx = self.DevPcie.Hsio.TimingRx
