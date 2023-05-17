@@ -116,6 +116,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--pcieBoardType",
+        type     = str,
+        required = False,
+        default  = None,
+        help     = "define the type of PCIe card, used to select I2C mapping. Options: [None or SlacPgpCardG4 or XilinxKcu1500 or XilinxVariumC1100]",
+    )
+
+    parser.add_argument(
         "--serverPort",
         type     = int,
         required = False,
@@ -184,6 +192,7 @@ if __name__ == "__main__":
             yamlFileLclsII = args.yamlFileLclsII,
             startupMode    = args.startupMode,
             standAloneMode = args.standAloneMode,
+            pcieBoardType  = args.pcieBoardType,
             useDdr         = args.ddr,
         ) as root:
 
