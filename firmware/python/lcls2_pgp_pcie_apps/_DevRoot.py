@@ -20,7 +20,6 @@ import l2si_core               as l2si
 import surf.protocols.batcher  as batcher
 
 rogue.Version.minVersion('5.1.0')
-# rogue.Version.exactVersion('5.1.0')
 
 class DevRoot(shared.Root):
 
@@ -38,9 +37,6 @@ class DevRoot(shared.Root):
                  initRead       = True,  # Read all registers at start of the system
                  useDdr         = False,
                  **kwargs):
-
-        # Set the firmware Version lock = firmware/targets/shared_version.mk
-        self.FwVersionLock = 0x03000000
 
         # Set local variables
         self.startupMode    = startupMode
@@ -142,16 +138,6 @@ class DevRoot(shared.Root):
 
         # Check if not simulation
         if self.sim is False:
-
-            # Check for PCIe FW version
-            fwVersion = self.DevPcie.AxiPcieCore.AxiVersion.FpgaVersion.get()
-            if (fwVersion != self.FwVersionLock):
-                errMsg = f"""
-                    PCIe.AxiVersion.FpgaVersion = {fwVersion:#04x} != {self.FwVersionLock:#04x}
-                    Please update PCIe firmware using software/scripts/updatePcieFpga.py
-                    """
-                click.secho(errMsg, bg='red')
-                raise ValueError(errMsg)
 
             # Useful pointer
             timingRx = self.DevPcie.Hsio.TimingRx
