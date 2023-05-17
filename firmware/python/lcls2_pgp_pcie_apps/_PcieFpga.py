@@ -16,10 +16,11 @@ import surf.axi                as axi
 
 class PcieFpga(pr.Device):
     def __init__(self,
-                 pgp4     = False,
-                 enLclsI  = True,
-                 enLclsII = False,
-                 useDdr   = False,
+                 pgp4      = False,
+                 enLclsI   = True,
+                 enLclsII  = False,
+                 useDdr    = False,
+                 boardType = None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -27,6 +28,7 @@ class PcieFpga(pr.Device):
         self.add(pcie.AxiPcieCore(
             offset      = 0x0000_0000,
             numDmaLanes = 4,
+            boardType   = boardType,
             expand      = False,
         ))
 

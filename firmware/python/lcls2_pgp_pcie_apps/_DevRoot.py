@@ -35,6 +35,7 @@ class DevRoot(shared.Root):
                  dataVc         = 1,
                  pollEn         = True,  # Enable automatic polling registers
                  initRead       = True,  # Read all registers at start of the system
+                 pcieBoardType  = None,
                  useDdr         = False,
                  **kwargs):
 
@@ -70,13 +71,14 @@ class DevRoot(shared.Root):
 
         # Instantiate the top level Device and pass it the memory map
         self.add(pcieApp.PcieFpga(
-            name     = 'DevPcie',
-            memBase  = self.memMap,
-            pgp4     = pgp4,
-            enLclsI  = enLclsI,
-            enLclsII = enLclsII,
-            useDdr   = useDdr,
-            expand   = True,
+            name      = 'DevPcie',
+            memBase   = self.memMap,
+            pgp4      = pgp4,
+            enLclsI   = enLclsI,
+            enLclsII  = enLclsII,
+            useDdr    = useDdr,
+            boardType = pcieBoardType,
+            expand    = True,
         ))
 
         self.add(pr.LocalVariable(
