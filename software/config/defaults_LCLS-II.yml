@@ -74,7 +74,7 @@ DevRoot:
             Config_L0Select_Reset: 0x0
             Config_L0Select_Enabled: True
             AxilRdEn: True
-            Config_L0Select_RateSel: 0x4 # 102 Hz (ask Matt Weaver for more information)
+            Config_L0Select_RateSel: '10 Hz'
             Config_L0Select_DestSel: 0x8000
             Pipeline_Depth_Clks: 20000
             Pipeline_Depth_Fids: 100
