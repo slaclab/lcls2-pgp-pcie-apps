@@ -85,12 +85,12 @@ for i in range(4):
 
 1) Setup Xilinx licensing
 ```
-$ source cameralink-gateway/firmware/setup_env_slac.sh
+$ source lcls2-pgp-pcie-apps/firmware/setup_env_slac.sh
 ```
 
 2) Go to the target directory and make the firmware:
 ```
-$ cd cameralink-gateway/firmware/targets/ClinkKcu1500Pgp2b/
+$ cd lcls2-pgp-pcie-apps/firmware/targets/XilinxC1100/Lcls2XilinxC1100Pgp4_6Gbps
 $ make
 ```
 
@@ -123,7 +123,7 @@ https://docs.google.com/document/d/1B_sIkk9Fxsw2EjOBpGVFpfCCWoIiOJoVGTrkTshZfew/
 
 1) Setup the rogue environment
 ```
-$ cd cameralink-gateway/software
+$ cd lcls2-pgp-pcie-apps/software
 $ source setup_env_slac.sh
 ```
 
