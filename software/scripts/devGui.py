@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "--yamlFileLclsI",
         type     = str,
         required = False,
-        default  = None, # Default: None = bypassing YAML load
+        default  = "config/defaults_LCLS-I.yml", # Default: None = bypassing YAML load
         help     = "Sets the default LCLS-I YAML configuration file to be loaded at the root.start()",
     )
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         "--yamlFileLclsII",
         type     = str,
         required = False,
-        default  = None, # Default: None = bypassing YAML load
+        default  = "config/defaults_LCLS-II.yml", # Default: None = bypassing YAML load
         help     = "Sets the default LCLS-II YAML configuration file to be loaded at the root.start()",
     )
 
