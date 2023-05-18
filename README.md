@@ -140,9 +140,9 @@ sudo reboot
 
 <!--- ######################################################## -->
 
-# Example of starting up with PGP4, stand alone mode (locally generated timing), and VcDataTap=0
+# Example of starting up with PGP4, LCLS-I timing (startupMode=False), VcDataTap=0 (dataVc=0), and stand alone mode (locally generated timing)
 ```
-$ python scripts/devGui --pgp4 1 --standAloneMode 1 --vcDataTap 0
+$ python scripts/devGui.py --pgp4 1 --startupMode 0 --dataVc 0 --standAloneMode 1
 Then execute the StartRun() command to start the triggering
 ```
 
