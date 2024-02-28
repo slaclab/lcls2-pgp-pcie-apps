@@ -5,7 +5,6 @@ TopRoguePackage: lcls2_pgp_pcie_apps
 
 RoguePackages:
   - submodules/axi-pcie-core/python
-  - submodules/clink-gateway-fw-lib/python
   - submodules/l2si-core/python
   - submodules/lcls2-pgp-fw-lib/python
   - submodules/lcls-timing-core/python
