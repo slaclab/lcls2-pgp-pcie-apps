@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
--- Description: Camera link gateway PCIe card with PGPv4 at 10 Gb/s
--------------------------------------------------------------------------------
 -- This file is part of 'lcls2-pgp-pcie-apps'.
 -- It is subject to the license terms in the LICENSE.txt file found in the
 -- top-level directory of this distribution and at:
