@@ -19,7 +19,7 @@ import lcls2_pgp_fw_lib.shared as shared
 import l2si_core               as l2si
 import surf.protocols.batcher  as batcher
 
-rogue.Version.minVersion('5.1.0')
+rogue.Version.minVersion('6.4.0')
 
 class DevRoot(shared.Root):
 
@@ -37,30 +37,38 @@ class DevRoot(shared.Root):
                  initRead       = True,  # Read all registers at start of the system
                  pcieBoardType  = None,
                  useDdr         = False,
+                 zmqSrvEn       = True,
                  **kwargs):
 
         # Set local variables
+        self.dev            = dev
         self.startupMode    = startupMode
         self.standAloneMode = standAloneMode
         self.dataVc         = dataVc
         self.yamlFileLclsI  = yamlFileLclsI
         self.yamlFileLclsII = yamlFileLclsII
 
-        # Check for simulation
-        if dev == 'sim':
-            kwargs['timeout'] = 100000000 # 100 s
-            self.sim          = True
-        else:
-            kwargs['timeout'] = 5000000 # 5 s
-            self.sim          = False
-
         # Pass custom value to parent via super function
         super().__init__(
             dev         = dev,
             pgp4        = pgp4,
-            pollEn      = False if self.sim else pollEn,
-            initRead    = False if self.sim else initRead,
+            pollEn      = pollEn,
+            initRead    = initRead,
             **kwargs)
+
+        # Add ZMQ server
+        if zmqSrvEn:
+            self.zmqServer = pr.interfaces.ZmqServer(root=self, addr='127.0.0.1', port=0)
+            self.addInterface(self.zmqServer)
+
+        # Check for simulation
+        if dev == 'sim':
+            # Set the timeout
+            self._timeout = 100000000 # firmware simulation slow and timeout base on real time (not simulation time)
+
+        else:
+            # Set the timeout
+            self._timeout = 5000000 # 5.0 seconds default
 
         # Unhide the RemoteVariableDump command
         self.RemoteVariableDump.hidden = False
@@ -139,7 +147,7 @@ class DevRoot(shared.Root):
             enableList.hidden = True
 
         # Check if not simulation
-        if self.sim is False:
+        if (self.dev != 'sim'):
 
             # Useful pointer
             timingRx = self.DevPcie.Hsio.TimingRx
@@ -188,6 +196,6 @@ class DevRoot(shared.Root):
         super().initialize()
 
         # Check if not simulation
-        if self.sim is False:
+        if (self.dev != 'sim'):
             self.StopRun()
             self.CountReset()

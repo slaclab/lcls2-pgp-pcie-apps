@@ -14,7 +14,6 @@ import sys
 import argparse
 import importlib
 import rogue
-import pyrogue.gui
 import pyrogue.pydm
 
 if __name__ == "__main__":
@@ -39,8 +38,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--pgp4",
         type     = argBool,
-        required = True,
-        help     = "true = PGPv4, false = PGP2b",
+        required = False,
+        default  = True,
+        help     = "False = PGP2b, True = PGPv4",
     )
 
     parser.add_argument(
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         "--enLclsII",
         type     = argBool,
         required = False,
-        default  = False, # Default: Disable LCLS-II hardware registers
+        default  = True, # Default: Disable LCLS-II hardware registers
         help     = "Enable LCLS-II hardware registers",
     )
 
@@ -200,22 +200,25 @@ if __name__ == "__main__":
         # Development PyDM GUI
         ######################
         if (args.guiType == 'PyDM'):
-
-            pyrogue.pydm.runPyDM(root=root)
+            pyrogue.pydm.runPyDM(
+                serverList  = root.zmqServer.address,
+                sizeX = 800,
+                sizeY = 1000,
+            )
 
         #################
-        # Legacy PyQT GUI
+        # No GUI
         #################
-        elif (args.guiType == 'PyQt'):
+        elif (args.guiType == 'None'):
 
-            # Create GUI
-            appTop = pyrogue.gui.application(sys.argv)
-            guiTop = pyrogue.gui.GuiTop()
-            guiTop.addTree(root)
-            guiTop.resize(800, 1000)
-
-            # Run gui
-            appTop.exec_()
+            # Wait to be killed via Ctrl-C
+            print('Running root server.  Hit Ctrl-C to exit')
+            try:
+                while True:
+                    time.sleep(1)
+            except:
+                pass
+            print('Stopping root server...')
             root.stop()
 
         ####################
@@ -223,5 +226,6 @@ if __name__ == "__main__":
         ####################
         else:
             raise ValueError("Invalid GUI type (%s)" % (args.guiType) )
+
 
     #################################################################
