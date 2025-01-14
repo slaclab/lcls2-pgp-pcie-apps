@@ -17,3 +17,7 @@ loadConstraints -dir "$::DIR_PATH/hdl"
 
 # Updating impl_1 strategy
 set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
+
+# Set top-level simulation
+set_property top {TimingRxTb} [get_filesets sim_1]
+# set_property top {TimingGtCoreWrapperTb} [get_filesets sim_1]

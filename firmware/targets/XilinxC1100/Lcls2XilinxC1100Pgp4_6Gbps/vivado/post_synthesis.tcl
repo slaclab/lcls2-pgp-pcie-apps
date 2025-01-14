@@ -21,3 +21,51 @@ open_run synth_1
 
 # Bug fix for Vivado not connecting the HBM's debug hub clock
 SetDebugCoreClk {dbg_hub} {hbmRefClk}
+
+# ###############################
+# ## Set the name of the ILA core
+# ###############################
+# set ilaName u_ila_0
+
+# ##################
+# ## Create the core
+# ##################
+# CreateDebugCore ${ilaName}
+
+# #######################
+# ## Set the record depth
+# #######################
+# set_property C_DATA_DEPTH 1024 [get_debug_cores ${ilaName}]
+
+# #################################
+# ## Set the clock for the ILA core
+# #################################
+# SetDebugCoreClk ${ilaName} {U_HSIO/U_TimingRx/stableClk}
+
+# #######################
+# ## Set the debug Probes
+# #######################
+
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/stableRst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/gtRxControl[*}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/gtRxControlPllReset}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/gtRxControlReset}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/gtRxStatus[*}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/rxStatus[*}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/rxStatus_reg[*}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/rxUserRst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/timingRxControl[*}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/timingRxRstTmp}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTY/rxbypassrst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTY/rxRst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTY/txbypassrst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTY/txUsrClkActive}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/rxbypassrst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/rxRst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/txbypassrst}
+# ConfigProbe ${ilaName} {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/txUsrClkActive}
+
+# ##########################
+# ## Write the port map file
+# ##########################
+# WriteDebugProbes ${ilaName}

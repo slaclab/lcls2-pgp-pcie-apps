@@ -1,3 +1,4 @@
+#export LCLS_TIMING_GTY_XCI = 1
 export INCLUDE_PGP4_6G = 1
 
 # Define target part

@@ -44,7 +44,7 @@ class PcieFpga(pr.Device):
         self.add(shared.Application(
             offset   = 0x00C0_0000,
             numLanes = 4,
-            expand   = True,
+            expand   = False,
         ))
 
         # Hardware Layer
